@@ -1,0 +1,2 @@
+[console_scripts]
+api-contract-guardian = api_contract_guardian.cli:app

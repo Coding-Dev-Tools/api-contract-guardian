@@ -1,0 +1,84 @@
+Metadata-Version: 2.4
+Name: api-contract-guardian
+Version: 0.1.0
+Summary: CLI tool that monitors OpenAPI schema diffs, detects breaking changes, generates migration guides, and gates CI pipelines on contract violations
+Author: Paperclip
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/paperclip-api/api-contract-guardian
+Project-URL: Repository, https://github.com/paperclip-api/api-contract-guardian
+Project-URL: Documentation, https://github.com/paperclip-api/api-contract-guardian#readme
+Project-URL: Issue Tracker, https://github.com/paperclip-api/api-contract-guardian/issues
+Keywords: openapi,api,contract,breaking-changes,ci,diff
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Testing
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: typer>=0.9.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: jsonschema>=4.17.0
+Requires-Dist: deepdiff>=6.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+
+# API Contract Guardian
+
+A Python CLI tool that monitors OpenAPI schema diffs between git branches, detects breaking changes, generates migration guides, and can block CI pipelines on contract violations.
+
+## Features
+
+- **Breaking Change Detection**: Identifies removed endpoints, changed types, renamed fields, removed properties, and more
+- **Migration Guide Generation**: Produces human-readable markdown migration guides
+- **CI Gating**: Exits with non-zero code when breaking changes are detected
+- **OpenAPI 3.x Support**: Full support for OpenAPI 3.0.x and 3.1.x specs
+- **Git Branch Diffing**: Compare specs between branches, tags, or commits
+- **File Comparison**: Compare two local spec files directly
+
+## Installation
+
+```bash
+pip install api-contract-guardian
+```
+
+## Quick Start
+
+```bash
+# Compare two spec files
+api-contract-guardian check spec-v1.yaml spec-v2.yaml
+
+# Compare git branches
+api-contract-guardian check --base main --head feature-api-v2 openapi.yaml
+
+# Generate migration guide
+api-contract-guardian migrate spec-v1.yaml spec-v2.yaml --output MIGRATION.md
+
+# CI gating (exits non-zero on breaking changes)
+api-contract-guardian gate spec-v1.yaml spec-v2.yaml
+```
+
+## Breaking Changes Detected
+
+| Category | Example |
+|----------|---------|
+| Removed endpoint | `DELETE /users/{id}` removed |
+| Removed property | `email` removed from `User` schema |
+| Changed type | `age` changed from `integer` to `string` |
+| Required property added | `phone` now required in `User` |
+| Renamed field | `name` renamed to `fullName` |
+| Response format changed | `200` response type changed |
+
+## Revenue Model
+
+- Free: open-source projects
+- Pro ($29/mo): unlimited checks, custom rules
+- Team ($99/mo): CI/CD integrations, team dashboard
+
+## License
+
+MIT

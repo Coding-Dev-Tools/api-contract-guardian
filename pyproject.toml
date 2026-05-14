@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "api-contract-guardian"
+version = "0.1.0"
+description = "CLI tool that monitors OpenAPI schema diffs, detects breaking changes, generates migration guides, and gates CI pipelines on contract violations"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "Paperclip"}]
+keywords = ["openapi", "api", "contract", "breaking-changes", "ci", "diff"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+    "jsonschema>=4.17.0",
+    "deepdiff>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/paperclip-api/api-contract-guardian"
+Repository = "https://github.com/paperclip-api/api-contract-guardian"
+Documentation = "https://github.com/paperclip-api/api-contract-guardian#readme"
+"Issue Tracker" = "https://github.com/paperclip-api/api-contract-guardian/issues"
+
+[project.scripts]
+api-contract-guardian = "api_contract_guardian.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
