@@ -9,7 +9,7 @@ description = "CLI tool that monitors OpenAPI schema diffs, detects breaking cha
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [{name = "Paperclip"}]
+authors = [{name = "Revenue Holdings"}]
 urls = {Homepage = "https://github.com/Coding-Dev-Tools/api-contract-guardian", Repository = "https://github.com/Coding-Dev-Tools/api-contract-guardian"}
 keywords = ["openapi", "api", "contract", "breaking-changes", "ci", "diff"]
 classifiers = [
