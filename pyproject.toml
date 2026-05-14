@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "api-contract-guardian"
@@ -8,9 +8,9 @@ version = "0.1.0"
 description = "CLI tool that monitors OpenAPI schema diffs, detects breaking changes, generates migration guides, and gates CI pipelines on contract violations"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "Paperclip"}]
-urls = {Homepage = "https://github.com/paperclip-dev/api-contract-guardian", Repository = "https://github.com/paperclip-dev/api-contract-guardian"}
+urls = {Homepage = "https://github.com/Coding-Dev-Tools/api-contract-guardian", Repository = "https://github.com/Coding-Dev-Tools/api-contract-guardian"}
 keywords = ["openapi", "api", "contract", "breaking-changes", "ci", "diff"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -34,12 +34,6 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
 ]
-
-[project.urls]
-Homepage = "https://github.com/Coding-Dev-Tools/api-contract-guardian"
-Repository = "https://github.com/Coding-Dev-Tools/api-contract-guardian"
-Documentation = "https://github.com/Coding-Dev-Tools/api-contract-guardian#readme"
-"Issue Tracker" = "https://github.com/Coding-Dev-Tools/api-contract-guardian/issues"
 
 [project.scripts]
 api-contract-guardian = "api_contract_guardian.cli:app"
