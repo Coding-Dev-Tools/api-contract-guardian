@@ -65,7 +65,7 @@ One license covers all Revenue Holdings CLI tools. Pricing is per-seat.
 🔹 **Annual billing**: Save 20%.  
 🔹 **Education / OSS**: Free Pro tier for verified students and open-source projects.  
 
-### What's in each tier?
+### Per-Tier Features
 
 | Feature | OSS | Pro | Team | Enterprise |
 |---------|:---:|:---:|:----:|:----------:|
