@@ -59,32 +59,33 @@ api-contract-guardian gate spec-v1.yaml spec-v2.yaml || echo "Breaking API chang
 
 ## Pricing
 
-One license covers all Revenue Holdings CLI tools. Pricing is per-seat.
+API Contract Guardian is one of eight tools in the Revenue Holdings suite. One license covers all CLI tools.
 
-| Tier | Price | Best For |
+| Plan | Price | Best For |
 |------|-------|----------|
-| **Open Source** | $0 | Individual devs, OSS projects — CLI only, limited checks |
-| **Pro** | **$29/mo** ($23 billed annually) | Professional devs — unlimited checks, custom rules |
-| **Team** | **$79/mo** ($63 billed annually) | Teams up to 5 — CI/CD integrations, team dashboard |
-| **Enterprise** | **$199/mo** (custom) | Organizations — compliance reports, RBAC, SSO, SLA |
+| **Free** | $0 | Individual devs, OSS — CLI only, 1 spec comparison |
+| **ACG Individual** | **$19/mo** ($15 billed annually) | Professional devs — unlimited specs, CI/CD gating |
+| **Suite (all 8 tools)** | **$49/mo** ($39 billed annually) | Full Revenue Holdings toolkit — 40% savings |
+| **Team** | **$79/mo** ($63 billed annually) | Up to 5 devs — shared dashboards, alerts, run history |
+| **Enterprise** | Custom | SSO, RBAC, compliance reports, dedicated support |
 
-🔹 **No lock-in**: CLI works fully offline on the free tier — no telemetry, no phone-home.  
+🔹 **No lock-in**: CLI works fully offline on the free tier — no telemetry, no phone-home.
 🔹 **Annual billing**: Save 20%.
 
 ### Per-Tier Features
 
-| Feature | OSS | Pro | Team | Enterprise |
-|---------|:---:|:---:|:----:|:----------:|
-| CLI: check, migrate, gate | ✓ | ✓ | ✓ | ✓ |
-| Unlimited API checks | — | ✓ | ✓ | ✓ |
-| Custom rules / policies | — | ✓ | ✓ | ✓ |
-| Team dashboard | — | — | ✓ | ✓ |
-| Compliance reports | — | — | — | ✓ |
-| RBAC | — | — | — | ✓ |
-| SSO / SAML / OIDC | — | — | — | ✓ |
-| Priority support | Community | 24h | 8h | Dedicated |
-
----
+| Feature | Free | ACG | Suite | Team | Enterprise |
+|---------|:----:|:---:|:-----:|:----:|:----------:|
+| CLI: check, gate, migrate | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Unlimited spec comparisons | — | ✓ | ✓ | ✓ | ✓ |
+| CI/CD gating | — | ✓ | ✓ | ✓ | ✓ |
+| Migration guide generation | — | ✓ | ✓ | ✓ | ✓ |
+| Custom rules / policies | — | ✓ | ✓ | ✓ | ✓ |
+| Team dashboard | — | — | — | ✓ | ✓ |
+| Compliance reports | — | — | — | — | ✓ |
+| RBAC | — | — | — | — | ✓ |
+| SSO / SAML / OIDC | — | — | — | — | ✓ |
+| Priority support | Community | 24h | 24h | 8h | Dedicated |
 
 <p align="center">
   <sub>Part of <a href="https://coding-dev-tools.github.io/revenueholdings.dev/">Revenue Holdings</a> — CLI tools built by autonomous AI.</sub>
