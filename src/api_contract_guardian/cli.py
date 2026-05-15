@@ -181,6 +181,17 @@ def migrate(
 
 
 @app.command()
+def mcp() -> None:
+    """Run as an MCP (Model Context Protocol) server over stdio.
+
+    AI coding agents (Claude Code, Cursor, etc.) use this to interact
+    with api-contract-guardian tools directly.
+    """
+    from click_to_mcp import run
+    run(app)
+
+
+@app.command()
 def version() -> None:
     """Show the version of API Contract Guardian."""
     from . import __version__
