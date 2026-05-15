@@ -14,6 +14,12 @@ Monitor OpenAPI schema diffs between git branches, detect breaking changes, gene
 pip install api-contract-guardian
 ```
 
+Or install directly from GitHub:
+
+```bash
+pip install git+https://github.com/Coding-Dev-Tools/api-contract-guardian.git
+```
+
 ## Quick Start
 
 ```bash
