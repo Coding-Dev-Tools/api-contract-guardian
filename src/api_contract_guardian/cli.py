@@ -13,6 +13,8 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
 
+from revenueholdings_license import require_license
+
 from .diff import DiffResult, Severity, diff_specs
 from .gate import GateResult, check_gate
 from .loader import SpecLoadError, load_spec, validate_openapi_version
@@ -85,6 +87,7 @@ def diff(
     format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, markdown"),
 ) -> None:
     """Compare two OpenAPI specs and show all detected changes."""
+    require_license("api-contract-guardian")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
@@ -123,6 +126,7 @@ def check(
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
 ) -> None:
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
+    require_license("api-contract-guardian")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
@@ -162,6 +166,7 @@ def migrate(
     format: str = typer.Option("markdown", "--format", "-f", help="Output format: markdown, json"),
 ) -> None:
     """Generate a migration guide between two OpenAPI spec versions."""
+    require_license("api-contract-guardian")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
@@ -183,6 +188,7 @@ def migrate(
 @app.command()
 def mcp() -> None:
     """Run as an MCP (Model Context Protocol) server over stdio.
+    require_license("api-contract-guardian")
 
     AI coding agents (Claude Code, Cursor, etc.) use this to interact
     with api-contract-guardian tools directly.
@@ -194,6 +200,7 @@ def mcp() -> None:
 @app.command()
 def version() -> None:
     """Show the version of API Contract Guardian."""
+    require_license("api-contract-guardian")
     from . import __version__
     console.print(f"api-contract-guardian v{__version__}")
 

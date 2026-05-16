@@ -27,6 +27,7 @@ dependencies = [
     "pyyaml>=6.0",
     "jsonschema>=4.17.0",
     "deepdiff>=6.0.0",
+    "revenueholdings-license>=0.1.0",
 ]
 
 [project.optional-dependencies]
