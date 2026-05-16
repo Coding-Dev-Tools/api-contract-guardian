@@ -1,6 +1,10 @@
 # API Contract Guardian
 
+[![GitHub stars](https://img.shields.io/github/stars/Coding-Dev-Tools/api-contract-guardian?style=social)](https://github.com/Coding-Dev-Tools/api-contract-guardian/stargazers)
+
 Monitor OpenAPI schema diffs between git branches, detect breaking changes, generate migration guides, and block CI pipelines on contract violations.
+
+> ⭐ **Star this repo** if you maintain APIs — it helps other devs discover API Contract Guardian!
 
 [![PyPI](https://img.shields.io/pypi/v/api-contract-guardian)](https://pypi.org/project/api-contract-guardian/)
 [![Python](https://img.shields.io/pypi/pyversions/api-contract-guardian)](https://pypi.org/project/api-contract-guardian/)
