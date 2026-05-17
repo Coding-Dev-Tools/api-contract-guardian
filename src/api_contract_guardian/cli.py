@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
 
 try:
     from revenueholdings_license import require_license
@@ -21,7 +17,7 @@ except ImportError:
     def require_license(product: str) -> None:  # type: ignore[misc]
         pass
 
-from .diff import DiffResult, Severity, diff_specs
+from .diff import DiffResult, diff_specs
 from .gate import GateResult, check_gate
 from .loader import SpecLoadError, load_spec, validate_openapi_version
 from .migration import generate_migration_guide, generate_migration_guide_json
