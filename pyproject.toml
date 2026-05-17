@@ -27,7 +27,6 @@ dependencies = [
     "pyyaml>=6.0",
     "jsonschema>=4.17.0",
     "deepdiff>=6.0.0",
-    "revenueholdings-license>=0.1.0",
 ]
 
 [project.optional-dependencies]
@@ -35,6 +34,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
 ]
+license = ["revenueholdings-license>=0.1.0"]
 
 [project.scripts]
 api-contract-guardian = "api_contract_guardian.cli:app"

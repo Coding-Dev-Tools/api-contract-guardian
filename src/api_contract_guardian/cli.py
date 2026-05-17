@@ -13,7 +13,13 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
 
-from revenueholdings_license import require_license
+try:
+    from revenueholdings_license import require_license
+except ImportError:
+    import warnings
+    warnings.warn("revenueholdings-license not installed; license checks skipped", stacklevel=2)
+    def require_license(product: str) -> None:  # type: ignore[misc]
+        pass
 
 from .diff import DiffResult, Severity, diff_specs
 from .gate import GateResult, check_gate
