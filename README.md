@@ -3,7 +3,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/Coding-Dev-Tools/api-contract-guardian?style=social)](https://github.com/Coding-Dev-Tools/api-contract-guardian/stargazers)
 
 Monitor OpenAPI schema diffs between git branches, detect breaking changes, generate migration guides, and block CI pipelines on contract violations.
-n[![CI](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions)
+
+[![CI](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions)
 
 > â­ **Star this repo** if you maintain APIs â€” it helps other devs discover API Contract Guardian!
 
@@ -26,7 +27,9 @@ Or install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/Coding-Dev-Tools/api-contract-guardian.git
-nOr install via Homebrew (macOS/Linux):
+```
+
+Or install via Homebrew (macOS/Linux):
 
 ```bash
 brew tap Coding-Dev-Tools/tap
@@ -38,7 +41,6 @@ Or install via Scoop (Windows):
 ```bash
 scoop bucket add Coding-Dev-Tools https://github.com/Coding-Dev-Tools/scoop-bucket
 scoop install api-contract-guardian
-```
 ```
 
 ## Quick Start

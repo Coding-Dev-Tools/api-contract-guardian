@@ -18,14 +18,13 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "typer>=0.9.0",
-    "rich>=13.0.0",
-    "pyyaml>=6.0",
-    "jsonschema>=4.17.0",
-    "deepdiff>=6.0.0",
+  "typer>=0.9.0",
+  "rich>=13.0.0",
+  "pyyaml>=6.0",
 ]
 
 [project.urls]
@@ -34,6 +33,7 @@ Repository = "https://github.com/Coding-Dev-Tools/api-contract-guardian"
 "Bug Tracker" = "https://github.com/Coding-Dev-Tools/api-contract-guardian/issues"
 
 [project.optional-dependencies]
+licensing = ["revenueholdings-license>=0.1.0"]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
