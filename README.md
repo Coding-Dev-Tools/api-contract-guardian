@@ -88,13 +88,13 @@ api-contract-guardian gate spec-v1.yaml spec-v2.yaml || echo "Breaking API chang
 
 ## Pricing
 
-API Contract Guardian is one of eight tools in the Revenue Holdings suite. One license covers all CLI tools.
+API Contract Guardian is one of ten tools in the Revenue Holdings suite. One license covers all CLI tools.
 
 | Plan | Price | Best For |
 |------|-------|----------|
 | **Free** | $0 | Individual devs, OSS â€” CLI only, 1 spec comparison |
 | **ACG Individual** | **$19/mo** ($15 billed annually) | Professional devs â€” unlimited specs, CI/CD gating |
-| **Suite (all 8 tools)** | **$49/mo** ($39 billed annually) | Full Revenue Holdings toolkit â€” 40% savings |
+| **Suite (all 10 tools)** | **$49/mo** ($39 billed annually) | Full Revenue Holdings toolkit â€” 40% savings |
 | **Team** | **$79/mo** ($63 billed annually) | Up to 5 devs â€” shared dashboards, alerts, run history |
 | **Enterprise** | Custom | SSO, RBAC, compliance reports, dedicated support |
 
