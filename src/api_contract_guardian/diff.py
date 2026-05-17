@@ -256,7 +256,10 @@ def _diff_parameters(
                 kind="parameter_added",
                 severity=sev,
                 path=f"{op_path}.parameters.{key[0]}.{key[1]}",
-                description=f"Parameter '{key[1]}' ({key[0]}) was added" + (" (required)" if param.get("required") else ""),
+                description=(
+        f"Parameter '{key[1]}' ({key[0]}) was added"
+        + (" (required)" if param.get("required") else "")
+    ),
                 old_value=None,
                 new_value=param,
             ))
@@ -527,7 +530,10 @@ def _diff_schema_details(
                 kind="property_type_changed",
                 severity=Severity.BREAKING,
                 path=f"{schema_path}.properties.{prop_name}",
-                description=f"Property '{prop_name}' in '{name}' type changed from '{old_prop['type']}' to '{new_prop['type']}'",
+                description=(
+        f"Property '{prop_name}' in '{name}' type changed"
+        f" from '{old_prop['type']}' to '{new_prop['type']}'"
+    ),
                 old_value=old_prop["type"],
                 new_value=new_prop["type"],
             ))

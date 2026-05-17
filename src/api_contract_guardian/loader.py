@@ -54,7 +54,10 @@ def load_spec(path: str | Path) -> dict[str, Any]:
                 raise SpecLoadError(f"Cannot parse {path} as YAML or JSON: {exc}") from exc
 
     if not isinstance(spec, dict):
-        raise SpecLoadError(f"Spec in {path} is not a valid OpenAPI document (expected dict, got {type(spec).__name__})")
+        raise SpecLoadError(
+        f"Spec in {path} is not a valid OpenAPI document"
+        f" (expected dict, got {type(spec).__name__})"
+    )
 
     return spec
 

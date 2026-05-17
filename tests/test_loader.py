@@ -1,12 +1,8 @@
 """Tests for the loader module."""
 
 import json
-import tempfile
-from pathlib import Path
-
 import pytest
 import yaml
-
 from api_contract_guardian.loader import (
     SpecLoadError,
     get_operations,
@@ -17,8 +13,8 @@ from api_contract_guardian.loader import (
     validate_openapi_version,
 )
 
-
 # ── Fixtures ──
+
 
 @pytest.fixture
 def sample_spec():
@@ -55,6 +51,7 @@ def json_spec_file(tmp_path):
 
 # ── load_spec tests ──
 
+
 class TestLoadSpec:
     def test_load_yaml_file(self, yaml_spec_file):
         spec = load_spec(yaml_spec_file)
@@ -67,7 +64,9 @@ class TestLoadSpec:
 
     def test_load_yml_extension(self, tmp_path):
         p = tmp_path / "spec.yml"
-        p.write_text(yaml.dump({"openapi": "3.0.3", "info": {"title": "T", "version": "1.0.0"}, "paths": {}}), encoding="utf-8")
+        p.write_text(
+            yaml.dump({"openapi": "3.0.3", "info": {"title": "T", "version": "1.0.0"}, "paths": {}}), encoding="utf-8"
+        )
         spec = load_spec(p)
         assert spec["openapi"] == "3.0.3"
 
@@ -107,6 +106,7 @@ class TestLoadSpec:
 
 # ── load_spec_from_string tests ──
 
+
 class TestLoadSpecFromString:
     def test_load_yaml_string(self):
         content = yaml.dump({"openapi": "3.0.3", "info": {"title": "T", "version": "1.0.0"}, "paths": {}})
@@ -133,6 +133,7 @@ class TestLoadSpecFromString:
 
 # ── validate_openapi_version tests ──
 
+
 class TestValidateOpenapiVersion:
     def test_valid_3_0_spec(self, sample_spec):
         version = validate_openapi_version(sample_spec)
@@ -156,6 +157,7 @@ class TestValidateOpenapiVersion:
 
 
 # ── Helper function tests ──
+
 
 class TestGetPaths:
     def test_returns_paths(self):
@@ -195,7 +197,16 @@ class TestGetOperations:
         assert "summary" not in ops
 
     def test_all_methods(self):
-        path_item = {"get": {}, "post": {}, "put": {}, "patch": {}, "delete": {}, "head": {}, "options": {}, "trace": {}}
+        path_item = {
+            "get": {},
+            "post": {},
+            "put": {},
+            "patch": {},
+            "delete": {},
+            "head": {},
+            "options": {},
+            "trace": {},
+        }
         ops = get_operations(path_item)
         assert len(ops) == 8
 

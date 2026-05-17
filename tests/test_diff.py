@@ -1,7 +1,5 @@
 """Tests for the diff engine."""
 
-import pytest
-
 from api_contract_guardian.diff import (
     Change,
     DiffResult,
@@ -9,10 +7,12 @@ from api_contract_guardian.diff import (
     diff_specs,
 )
 
-
 # ── Minimal spec fixtures ──
 
-def _make_spec(paths=None, schemas=None, security_schemes=None, security=None, servers=None, info=None, openapi="3.0.3"):
+
+def _make_spec(
+    paths=None, schemas=None, security_schemes=None, security=None, servers=None, info=None, openapi="3.0.3"
+):
     spec = {
         "openapi": openapi,
         "info": info or {"title": "Test API", "version": "1.0.0"},
@@ -33,6 +33,7 @@ def _make_spec(paths=None, schemas=None, security_schemes=None, security=None, s
 
 # ── Severity and Change tests ──
 
+
 class TestSeverity:
     def test_values(self):
         assert Severity.BREAKING.value == "breaking"
@@ -43,7 +44,13 @@ class TestSeverity:
 
 class TestChange:
     def test_to_dict(self):
-        c = Change(kind="path_removed", severity=Severity.BREAKING, path="paths./users", description="Removed", old_value="/users")
+        c = Change(
+            kind="path_removed",
+            severity=Severity.BREAKING,
+            path="paths./users",
+            description="Removed",
+            old_value="/users",
+        )
         d = c.to_dict()
         assert d["kind"] == "path_removed"
         assert d["severity"] == "breaking"
@@ -63,16 +70,19 @@ class TestDiffResult:
         assert r.has_breaking
 
     def test_to_dict_summary(self):
-        r = DiffResult(changes=[
-            Change(kind="a", severity=Severity.BREAKING, path="", description=""),
-            Change(kind="b", severity=Severity.NON_BREAKING, path="", description=""),
-        ])
+        r = DiffResult(
+            changes=[
+                Change(kind="a", severity=Severity.BREAKING, path="", description=""),
+                Change(kind="b", severity=Severity.NON_BREAKING, path="", description=""),
+            ]
+        )
         s = r.to_dict()["summary"]
         assert s["breaking"] == 1
         assert s["non_breaking"] == 1
 
 
 # ── Path diff tests ──
+
 
 class TestPathDiff:
     def test_path_removed_breaking(self):
@@ -104,6 +114,7 @@ class TestPathDiff:
 
 # ── Operation diff tests ──
 
+
 class TestOperationDiff:
     def test_operation_removed_breaking(self):
         old = _make_spec(paths={"/users": {"get": {"responses": {"200": {"description": "OK"}}}}})
@@ -124,7 +135,14 @@ class TestOperationDiff:
         assert any(c.kind == "operation_deprecated" and c.severity == Severity.DANGEROUS for c in result.changes)
 
     def test_multiple_methods_removed(self):
-        old = _make_spec(paths={"/users": {"get": {"responses": {"200": {"description": "OK"}}}, "post": {"responses": {"201": {"description": "Created"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "get": {"responses": {"200": {"description": "OK"}}},
+                    "post": {"responses": {"201": {"description": "Created"}}},
+                }
+            }
+        )
         new = _make_spec(paths={"/users": {}})
         result = diff_specs(old, new)
         removed = [c for c in result.changes if c.kind == "operation_removed"]
@@ -133,107 +151,271 @@ class TestOperationDiff:
 
 # ── Parameter diff tests ──
 
+
 class TestParameterDiff:
     def test_required_param_removed_breaking(self):
-        old = _make_spec(paths={"/users": {"get": {"parameters": [{"name": "id", "in": "query", "required": True}], "responses": {"200": {"description": "OK"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "get": {
+                        "parameters": [{"name": "id", "in": "query", "required": True}],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            }
+        )
         new = _make_spec(paths={"/users": {"get": {"parameters": [], "responses": {"200": {"description": "OK"}}}}})
         result = diff_specs(old, new)
         assert any(c.kind == "parameter_removed" and c.severity == Severity.BREAKING for c in result.changes)
 
     def test_optional_param_removed_non_breaking(self):
-        old = _make_spec(paths={"/users": {"get": {"parameters": [{"name": "page", "in": "query", "required": False}], "responses": {"200": {"description": "OK"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "get": {
+                        "parameters": [{"name": "page", "in": "query", "required": False}],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            }
+        )
         new = _make_spec(paths={"/users": {"get": {"parameters": [], "responses": {"200": {"description": "OK"}}}}})
         result = diff_specs(old, new)
         assert any(c.kind == "parameter_removed" and c.severity == Severity.NON_BREAKING for c in result.changes)
 
     def test_required_param_added_breaking(self):
         old = _make_spec(paths={"/users": {"get": {"parameters": [], "responses": {"200": {"description": "OK"}}}}})
-        new = _make_spec(paths={"/users": {"get": {"parameters": [{"name": "id", "in": "query", "required": True}], "responses": {"200": {"description": "OK"}}}}})
+        new = _make_spec(
+            paths={
+                "/users": {
+                    "get": {
+                        "parameters": [{"name": "id", "in": "query", "required": True}],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "parameter_added" and c.severity == Severity.BREAKING for c in result.changes)
 
     def test_optional_param_added_non_breaking(self):
         old = _make_spec(paths={"/users": {"get": {"parameters": [], "responses": {"200": {"description": "OK"}}}}})
-        new = _make_spec(paths={"/users": {"get": {"parameters": [{"name": "page", "in": "query", "required": False}], "responses": {"200": {"description": "OK"}}}}})
+        new = _make_spec(
+            paths={
+                "/users": {
+                    "get": {
+                        "parameters": [{"name": "page", "in": "query", "required": False}],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "parameter_added" and c.severity == Severity.NON_BREAKING for c in result.changes)
 
     def test_param_became_required_breaking(self):
-        old = _make_spec(paths={"/users": {"get": {"parameters": [{"name": "id", "in": "query", "required": False}], "responses": {"200": {"description": "OK"}}}}})
-        new = _make_spec(paths={"/users": {"get": {"parameters": [{"name": "id", "in": "query", "required": True}], "responses": {"200": {"description": "OK"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "get": {
+                        "parameters": [{"name": "id", "in": "query", "required": False}],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/users": {
+                    "get": {
+                        "parameters": [{"name": "id", "in": "query", "required": True}],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "parameter_became_required" for c in result.changes)
 
     def test_param_type_changed_breaking(self):
-        old = _make_spec(paths={"/users": {"get": {"parameters": [{"name": "id", "in": "query", "required": False, "schema": {"type": "string"}}], "responses": {"200": {"description": "OK"}}}}})
-        new = _make_spec(paths={"/users": {"get": {"parameters": [{"name": "id", "in": "query", "required": False, "schema": {"type": "integer"}}], "responses": {"200": {"description": "OK"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "get": {
+                        "parameters": [{"name": "id", "in": "query", "required": False, "schema": {"type": "string"}}],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/users": {
+                    "get": {
+                        "parameters": [{"name": "id", "in": "query", "required": False, "schema": {"type": "integer"}}],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "parameter_type_changed" for c in result.changes)
 
 
 # ── Request body diff tests ──
 
+
 class TestRequestBodyDiff:
     def test_request_body_removed_breaking(self):
-        old = _make_spec(paths={"/users": {"post": {"requestBody": {"content": {"application/json": {}}}, "responses": {"201": {"description": "Created"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "post": {
+                        "requestBody": {"content": {"application/json": {}}},
+                        "responses": {"201": {"description": "Created"}},
+                    }
+                }
+            }
+        )
         new = _make_spec(paths={"/users": {"post": {"responses": {"201": {"description": "Created"}}}}})
         result = diff_specs(old, new)
         assert any(c.kind == "request_body_removed" for c in result.changes)
 
     def test_request_body_added_non_breaking(self):
         old = _make_spec(paths={"/users": {"post": {"responses": {"201": {"description": "Created"}}}}})
-        new = _make_spec(paths={"/users": {"post": {"requestBody": {"content": {"application/json": {}}}, "responses": {"201": {"description": "Created"}}}}})
+        new = _make_spec(
+            paths={
+                "/users": {
+                    "post": {
+                        "requestBody": {"content": {"application/json": {}}},
+                        "responses": {"201": {"description": "Created"}},
+                    }
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "request_body_added" for c in result.changes)
 
     def test_request_body_became_required_breaking(self):
-        old = _make_spec(paths={"/users": {"post": {"requestBody": {"content": {"application/json": {}}}, "responses": {"201": {"description": "Created"}}}}})
-        new = _make_spec(paths={"/users": {"post": {"requestBody": {"required": True, "content": {"application/json": {}}}, "responses": {"201": {"description": "Created"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "post": {
+                        "requestBody": {"content": {"application/json": {}}},
+                        "responses": {"201": {"description": "Created"}},
+                    }
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/users": {
+                    "post": {
+                        "requestBody": {"required": True, "content": {"application/json": {}}},
+                        "responses": {"201": {"description": "Created"}},
+                    }
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "request_body_became_required" for c in result.changes)
 
     def test_request_content_type_removed_breaking(self):
-        old = _make_spec(paths={"/users": {"post": {"requestBody": {"content": {"application/json": {}, "application/xml": {}}}, "responses": {"201": {"description": "Created"}}}}})
-        new = _make_spec(paths={"/users": {"post": {"requestBody": {"content": {"application/json": {}}}, "responses": {"201": {"description": "Created"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "post": {
+                        "requestBody": {"content": {"application/json": {}, "application/xml": {}}},
+                        "responses": {"201": {"description": "Created"}},
+                    }
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/users": {
+                    "post": {
+                        "requestBody": {"content": {"application/json": {}}},
+                        "responses": {"201": {"description": "Created"}},
+                    }
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "request_content_type_removed" for c in result.changes)
 
     def test_request_content_type_added_non_breaking(self):
-        old = _make_spec(paths={"/users": {"post": {"requestBody": {"content": {"application/json": {}}}, "responses": {"201": {"description": "Created"}}}}})
-        new = _make_spec(paths={"/users": {"post": {"requestBody": {"content": {"application/json": {}, "application/xml": {}}}, "responses": {"201": {"description": "Created"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {
+                    "post": {
+                        "requestBody": {"content": {"application/json": {}}},
+                        "responses": {"201": {"description": "Created"}},
+                    }
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/users": {
+                    "post": {
+                        "requestBody": {"content": {"application/json": {}, "application/xml": {}}},
+                        "responses": {"201": {"description": "Created"}},
+                    }
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "request_content_type_added" for c in result.changes)
 
 
 # ── Response diff tests ──
 
+
 class TestResponseDiff:
     def test_response_removed_breaking(self):
-        old = _make_spec(paths={"/users": {"get": {"responses": {"200": {"description": "OK"}, "404": {"description": "Not Found"}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {"get": {"responses": {"200": {"description": "OK"}, "404": {"description": "Not Found"}}}}
+            }
+        )
         new = _make_spec(paths={"/users": {"get": {"responses": {"200": {"description": "OK"}}}}})
         result = diff_specs(old, new)
         assert any(c.kind == "response_removed" for c in result.changes)
 
     def test_response_added_non_breaking(self):
         old = _make_spec(paths={"/users": {"get": {"responses": {"200": {"description": "OK"}}}}})
-        new = _make_spec(paths={"/users": {"get": {"responses": {"200": {"description": "OK"}, "404": {"description": "Not Found"}}}}})
+        new = _make_spec(
+            paths={
+                "/users": {"get": {"responses": {"200": {"description": "OK"}, "404": {"description": "Not Found"}}}}
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "response_added" for c in result.changes)
 
     def test_response_content_type_removed_breaking(self):
-        old = _make_spec(paths={"/users": {"get": {"responses": {"200": {"content": {"application/json": {}, "application/xml": {}}}}}}})
+        old = _make_spec(
+            paths={
+                "/users": {"get": {"responses": {"200": {"content": {"application/json": {}, "application/xml": {}}}}}}
+            }
+        )
         new = _make_spec(paths={"/users": {"get": {"responses": {"200": {"content": {"application/json": {}}}}}}})
         result = diff_specs(old, new)
         assert any(c.kind == "response_content_type_removed" for c in result.changes)
 
     def test_response_content_type_added_non_breaking(self):
         old = _make_spec(paths={"/users": {"get": {"responses": {"200": {"content": {"application/json": {}}}}}}})
-        new = _make_spec(paths={"/users": {"get": {"responses": {"200": {"content": {"application/json": {}, "application/xml": {}}}}}}})
+        new = _make_spec(
+            paths={
+                "/users": {"get": {"responses": {"200": {"content": {"application/json": {}, "application/xml": {}}}}}}
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "response_content_type_added" for c in result.changes)
 
 
 # ── Schema diff tests ──
+
 
 class TestSchemaDiff:
     def test_schema_removed_breaking(self):
@@ -255,28 +437,80 @@ class TestSchemaDiff:
         assert any(c.kind == "schema_type_changed" for c in result.changes)
 
     def test_property_became_required_breaking(self):
-        old = _make_spec(schemas={"User": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}}}})
-        new = _make_spec(schemas={"User": {"type": "object", "required": ["id", "name"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}}}})
+        old = _make_spec(
+            schemas={
+                "User": {
+                    "type": "object",
+                    "required": ["id"],
+                    "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
+                }
+            }
+        )
+        new = _make_spec(
+            schemas={
+                "User": {
+                    "type": "object",
+                    "required": ["id", "name"],
+                    "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "property_became_required" for c in result.changes)
 
     def test_property_no_longer_required_non_breaking(self):
-        old = _make_spec(schemas={"User": {"type": "object", "required": ["id", "name"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}}}})
-        new = _make_spec(schemas={"User": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}}}})
+        old = _make_spec(
+            schemas={
+                "User": {
+                    "type": "object",
+                    "required": ["id", "name"],
+                    "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
+                }
+            }
+        )
+        new = _make_spec(
+            schemas={
+                "User": {
+                    "type": "object",
+                    "required": ["id"],
+                    "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
+                }
+            }
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "property_no_longer_required" for c in result.changes)
 
     def test_property_removed_breaking_if_required(self):
-        old = _make_spec(schemas={"User": {"type": "object", "required": ["id", "name"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}}}})
-        new = _make_spec(schemas={"User": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}})
+        old = _make_spec(
+            schemas={
+                "User": {
+                    "type": "object",
+                    "required": ["id", "name"],
+                    "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
+                }
+            }
+        )
+        new = _make_spec(
+            schemas={"User": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}}
+        )
         result = diff_specs(old, new)
         prop_removed = [c for c in result.changes if c.kind == "property_removed"]
         assert len(prop_removed) == 1
         assert prop_removed[0].severity == Severity.BREAKING
 
     def test_property_removed_dangerous_if_optional(self):
-        old = _make_spec(schemas={"User": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}, "nickname": {"type": "string"}}}})
-        new = _make_spec(schemas={"User": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}})
+        old = _make_spec(
+            schemas={
+                "User": {
+                    "type": "object",
+                    "required": ["id"],
+                    "properties": {"id": {"type": "string"}, "nickname": {"type": "string"}},
+                }
+            }
+        )
+        new = _make_spec(
+            schemas={"User": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}}
+        )
         result = diff_specs(old, new)
         prop_removed = [c for c in result.changes if c.kind == "property_removed"]
         assert len(prop_removed) == 1
@@ -284,7 +518,9 @@ class TestSchemaDiff:
 
     def test_property_added_non_breaking(self):
         old = _make_spec(schemas={"User": {"type": "object", "properties": {"id": {"type": "string"}}}})
-        new = _make_spec(schemas={"User": {"type": "object", "properties": {"id": {"type": "string"}, "email": {"type": "string"}}}})
+        new = _make_spec(
+            schemas={"User": {"type": "object", "properties": {"id": {"type": "string"}, "email": {"type": "string"}}}}
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "property_added" for c in result.changes)
 
@@ -295,8 +531,12 @@ class TestSchemaDiff:
         assert any(c.kind == "property_type_changed" for c in result.changes)
 
     def test_property_format_changed_dangerous(self):
-        old = _make_spec(schemas={"User": {"type": "object", "properties": {"created": {"type": "string", "format": "date"}}}})
-        new = _make_spec(schemas={"User": {"type": "object", "properties": {"created": {"type": "string", "format": "date-time"}}}})
+        old = _make_spec(
+            schemas={"User": {"type": "object", "properties": {"created": {"type": "string", "format": "date"}}}}
+        )
+        new = _make_spec(
+            schemas={"User": {"type": "object", "properties": {"created": {"type": "string", "format": "date-time"}}}}
+        )
         result = diff_specs(old, new)
         assert any(c.kind == "property_format_changed" for c in result.changes)
 
@@ -315,6 +555,7 @@ class TestSchemaDiff:
 
 
 # ── Security scheme diff tests ──
+
 
 class TestSecuritySchemeDiff:
     def test_security_scheme_removed_breaking(self):
@@ -338,6 +579,7 @@ class TestSecuritySchemeDiff:
 
 # ── Security requirements diff tests ──
 
+
 class TestSecurityRequirementsDiff:
     def test_global_security_removed_dangerous(self):
         old = _make_spec(security=[{"bearerAuth": []}])
@@ -353,6 +595,7 @@ class TestSecurityRequirementsDiff:
 
 
 # ── Server diff tests ──
+
 
 class TestServerDiff:
     def test_server_removed_dangerous(self):
@@ -370,6 +613,7 @@ class TestServerDiff:
 
 # ── Info diff tests ──
 
+
 class TestInfoDiff:
     def test_title_changed_info(self):
         old = _make_spec(info={"title": "Old API", "version": "1.0.0"})
@@ -385,6 +629,7 @@ class TestInfoDiff:
 
 
 # ── Integration / complex scenario tests ──
+
 
 class TestDiffIntegration:
     def test_identical_specs_no_changes(self):
@@ -416,7 +661,13 @@ class TestDiffIntegration:
                     },
                 },
             },
-            schemas={"User": {"type": "object", "required": ["id", "name"], "properties": {"id": {"type": "string"}, "name": {"type": "string"}}}},
+            schemas={
+                "User": {
+                    "type": "object",
+                    "required": ["id", "name"],
+                    "properties": {"id": {"type": "string"}, "name": {"type": "string"}},
+                }
+            },
         )
         result = diff_specs(old, new)
         assert result.has_breaking

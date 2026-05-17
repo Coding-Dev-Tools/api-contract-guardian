@@ -1,7 +1,5 @@
 """Tests for the migration module."""
 
-import pytest
-
 from api_contract_guardian.diff import Change, DiffResult, Severity
 from api_contract_guardian.migration import generate_migration_guide, generate_migration_guide_json
 
@@ -28,20 +26,28 @@ class TestGenerateMigrationGuide:
         assert "3.1.0" in guide
 
     def test_breaking_changes_section(self):
-        changes = [Change(kind="path_removed", severity=Severity.BREAKING, path="paths./users", description="Path removed")]
+        changes = [
+            Change(kind="path_removed", severity=Severity.BREAKING, path="paths./users", description="Path removed")
+        ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Breaking Changes" in guide
         assert "path_removed" in guide
 
     def test_dangerous_changes_section(self):
-        changes = [Change(kind="operation_deprecated", severity=Severity.DANGEROUS, path="paths./old", description="Deprecated")]
+        changes = [
+            Change(
+                kind="operation_deprecated", severity=Severity.DANGEROUS, path="paths./old", description="Deprecated"
+            )
+        ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Dangerous Changes" in guide
 
     def test_non_breaking_changes_section(self):
-        changes = [Change(kind="path_added", severity=Severity.NON_BREAKING, path="paths./new", description="Path added")]
+        changes = [
+            Change(kind="path_added", severity=Severity.NON_BREAKING, path="paths./new", description="Path added")
+        ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Non-Breaking Changes" in guide
@@ -63,7 +69,9 @@ class TestGenerateMigrationGuide:
         assert "| Non-breaking | 1 |" in guide
 
     def test_migration_steps_generated_for_breaking(self):
-        changes = [Change(kind="path_removed", severity=Severity.BREAKING, path="paths./users", description="Path removed")]
+        changes = [
+            Change(kind="path_removed", severity=Severity.BREAKING, path="paths./users", description="Path removed")
+        ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Recommended Migration Steps" in guide
@@ -75,7 +83,16 @@ class TestGenerateMigrationGuide:
         assert "Recommended Migration Steps" not in guide
 
     def test_value_change_shown(self):
-        changes = [Change(kind="type_changed", severity=Severity.BREAKING, path="x", description="Type changed", old_value="string", new_value="integer")]
+        changes = [
+            Change(
+                kind="type_changed",
+                severity=Severity.BREAKING,
+                path="x",
+                description="Type changed",
+                old_value="string",
+                new_value="integer",
+            )
+        ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Before" in guide

@@ -124,7 +124,10 @@ def _generate_steps(breaking_changes: list[Change]) -> list[str]:
         params = ", ".join(f"`{c.path}`" for c in newly_required)
         steps.append(f"Add required parameters to requests: {params}")
 
-    required_params_added = [c for c in breaking_changes if c.kind == "parameter_added" and "(required)" in c.description]
+    required_params_added = [
+        c for c in breaking_changes
+        if c.kind == "parameter_added" and "(required)" in c.description
+    ]
     if required_params_added:
         params = ", ".join(f"`{c.path}`" for c in required_params_added)
         steps.append(f"Add newly required parameters: {params}")
@@ -138,7 +141,10 @@ def _generate_steps(breaking_changes: list[Change]) -> list[str]:
         schemas = ", ".join(f"`{c.path}`" for c in removed_schemas)
         steps.append(f"Replace removed schemas: {schemas}")
 
-    type_changes = [c for c in breaking_changes if c.kind in ("schema_type_changed", "property_type_changed", "parameter_type_changed")]
+    type_changes = [
+        c for c in breaking_changes
+        if c.kind in ("schema_type_changed", "property_type_changed", "parameter_type_changed")
+    ]
     if type_changes:
         steps.append("Update type handling code for changed types")
 
@@ -150,7 +156,10 @@ def _generate_steps(breaking_changes: list[Change]) -> list[str]:
     if enum_removals:
         steps.append("Update enum value references to remove deleted values")
 
-    removed_content_types = [c for c in breaking_changes if c.kind in ("request_content_type_removed", "response_content_type_removed")]
+    removed_content_types = [
+        c for c in breaking_changes
+        if c.kind in ("request_content_type_removed", "response_content_type_removed")
+    ]
     if removed_content_types:
         steps.append("Update content-type handling for removed content types")
 

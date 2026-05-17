@@ -118,8 +118,12 @@ def diff(
 def check(
     old: str = typer.Argument(..., help="Path to old (baseline) OpenAPI spec"),
     new: str = typer.Argument(..., help="Path to new (proposed) OpenAPI spec"),
-    fail_on_breaking: bool = typer.Option(True, "--fail-on-breaking/--allow-breaking", help="Fail on breaking changes"),
-    fail_on_dangerous: bool = typer.Option(False, "--fail-on-dangerous/--allow-dangerous", help="Fail on dangerous changes"),
+    fail_on_breaking: bool = typer.Option(
+        True, "--fail-on-breaking/--allow-breaking", help="Fail on breaking changes",
+    ),
+    fail_on_dangerous: bool = typer.Option(
+        False, "--fail-on-dangerous/--allow-dangerous", help="Fail on dangerous changes",
+    ),
     max_breaking: int = typer.Option(0, "--max-breaking", help="Max allowed breaking changes (default 0)"),
     max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max allowed dangerous changes (-1=unlimited)"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),

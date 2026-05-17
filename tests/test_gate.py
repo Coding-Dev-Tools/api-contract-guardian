@@ -1,7 +1,5 @@
 """Tests for the gate module."""
 
-import pytest
-
 from api_contract_guardian.diff import Change, DiffResult, Severity
 from api_contract_guardian.gate import GateResult, check_gate
 
