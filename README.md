@@ -6,9 +6,9 @@ Monitor OpenAPI schema diffs between git branches, detect breaking changes, gene
 
 > â­ **Star this repo** if you maintain APIs â€” it helps other devs discover API Contract Guardian!
 
-[![PyPI](https://img.shields.io/pypi/v/api-contract-guardian)](https://pypi.org/project/api-contract-guardian/)
-[![Python](https://img.shields.io/pypi/pyversions/api-contract-guardian)](https://pypi.org/project/api-contract-guardian/)
-[![License](https://img.shields.io/pypi/l/api-contract-guardian)](https://github.com/Coding-Dev-Tools/api-contract-guardian/blob/main/LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/Coding-Dev-Tools/api-contract-guardian?label=latest)](https://github.com/Coding-Dev-Tools/api-contract-guardian/releases)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/blob/main/LICENSE)
 
 **Why API Contract Guardian?** APIs evolve fast, and breaking changes slip into production when the team reviewing the PR doesn't know every detail of every endpoint. API Contract Guardian catches removed endpoints, changed types, renamed fields, and missing required properties at PR time â€” not after deploy. It generates human-readable migration guides so your API consumers aren't left guessing. Works with OpenAPI 3.0.x and 3.1.x, integrates into CI with a single non-zero exit, and compares specs across branches, tags, commits, or local files.
 
