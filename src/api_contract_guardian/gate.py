@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .diff import DiffResult, Severity
+from .diff import DiffResult
 
 
 @dataclass
@@ -53,20 +53,20 @@ def check_gate(
 
     # Determine effective thresholds
     if max_breaking >= 0:
-        if fail_on_breaking or max_breaking > 0:
+        if fail_on_breaking or max_breaking > 0:  # noqa: SIM108
             effective_max_breaking = max_breaking
         else:
-            effective_max_breaking = -1  # unlimited
+            effective_max_breaking = -1 # unlimited
     elif fail_on_breaking:
         effective_max_breaking = 0   # default: zero tolerance
     else:
         effective_max_breaking = -1  # unlimited
 
     if max_dangerous >= 0:
-        if fail_on_dangerous or max_dangerous > 0:
+        if fail_on_dangerous or max_dangerous > 0:  # noqa: SIM108
             effective_max_dangerous = max_dangerous
         else:
-            effective_max_dangerous = -1  # unlimited
+            effective_max_dangerous = -1 # unlimited
     elif fail_on_dangerous:
         effective_max_dangerous = 0   # default: zero tolerance
     else:

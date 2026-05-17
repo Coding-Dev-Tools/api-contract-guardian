@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .diff import Change, DiffResult, Severity
+from .diff import Change, DiffResult
 
 
 def generate_migration_guide(result: DiffResult) -> str:
@@ -27,8 +27,8 @@ def generate_migration_guide(result: DiffResult) -> str:
     summary = result.to_dict()["summary"]
     lines.append("## Summary")
     lines.append("")
-    lines.append(f"| Severity | Count |")
-    lines.append(f"|----------|-------|")
+    lines.append("| Severity | Count |")
+    lines.append("|----------|-------|")
     lines.append(f"| Breaking | {summary['breaking']} |")
     lines.append(f"| Dangerous | {summary['dangerous']} |")
     lines.append(f"| Non-breaking | {summary['non_breaking']} |")

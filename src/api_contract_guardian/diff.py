@@ -6,8 +6,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from deepdiff import DeepDiff
-
 
 class Severity(str, Enum):
     BREAKING = "breaking"

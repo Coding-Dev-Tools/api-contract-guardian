@@ -3,23 +3,18 @@
 from __future__ import annotations
 
 import json
-import sys
-from pathlib import Path
-from typing import Optional
-
 import typer
+from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
-from rich.text import Text
 
 try:
     from revenueholdings_license import require_license
 except ImportError:
     require_license = None
 
-from .diff import DiffResult, Severity, diff_specs
-from .gate import GateResult, check_gate
+from .diff import DiffResult, diff_specs
+from .gate import check_gate
 from .loader import SpecLoadError, load_spec, validate_openapi_version
 from .migration import generate_migration_guide, generate_migration_guide_json
 
@@ -86,7 +81,7 @@ def _print_result(result: DiffResult) -> None:
 def diff(
     old: str = typer.Argument(..., help="Path to old (baseline) OpenAPI spec"),
     new: str = typer.Argument(..., help="Path to new (proposed) OpenAPI spec"),
-    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
+    output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
     format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, markdown"),
 ) -> None:
     """Compare two OpenAPI specs and show all detected changes."""
@@ -127,7 +122,7 @@ def check(
     fail_on_dangerous: bool = typer.Option(False, "--fail-on-dangerous/--allow-dangerous", help="Fail on dangerous changes"),
     max_breaking: int = typer.Option(0, "--max-breaking", help="Max allowed breaking changes (default 0)"),
     max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max allowed dangerous changes (-1=unlimited)"),
-    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
+    output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
 ) -> None:
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
     if require_license:
@@ -167,7 +162,7 @@ def check(
 def migrate(
     old: str = typer.Argument(..., help="Path to old (baseline) OpenAPI spec"),
     new: str = typer.Argument(..., help="Path to new (proposed) OpenAPI spec"),
-    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
+    output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
     format: str = typer.Option("markdown", "--format", "-f", help="Output format: markdown, json"),
 ) -> None:
     """Generate a migration guide between two OpenAPI spec versions."""
