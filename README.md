@@ -43,6 +43,13 @@ scoop bucket add Coding-Dev-Tools https://github.com/Coding-Dev-Tools/scoop-buck
 scoop install api-contract-guardian
 ```
 
+
+**npm (Node.js wrapper):**
+```bash
+npm install -g api-contract-guardian
+```
+Then run: `api-contract-guardian --help`
+
 ## Quick Start
 
 ```bash
