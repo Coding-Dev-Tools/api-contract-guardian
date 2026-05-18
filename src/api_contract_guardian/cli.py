@@ -193,12 +193,12 @@ def migrate(
 @app.command()
 def mcp() -> None:
     """Run as an MCP (Model Context Protocol) server over stdio.
-    if require_license:
-        require_license("api-contract-guardian")
 
     AI coding agents (Claude Code, Cursor, etc.) use this to interact
     with api-contract-guardian tools directly.
     """
+    if require_license:
+        require_license("api-contract-guardian")
     from click_to_mcp import run
     run(app)
 

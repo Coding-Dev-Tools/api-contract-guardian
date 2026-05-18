@@ -4,7 +4,7 @@
 [![Awesome DevOps](https://img.shields.io/badge/Awesome_DevOps-Submitted-grey?logo=github)](https://github.com/wmariuss/awesome-devops)<!-- PR #433 -->
 
 Monitor OpenAPI schema diffs between git branches, detect breaking changes, generate migration guides, and block CI pipelines on contract violations.
-n[![CI](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions)
+[![CI](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions)
 
 > â­ **Star this repo** if you maintain APIs â€” it helps other devs discover API Contract Guardian!
 
@@ -27,7 +27,8 @@ Or install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/Coding-Dev-Tools/api-contract-guardian.git
-nOr install via Homebrew (macOS/Linux):
+
+Or install via Homebrew (macOS/Linux):
 
 ```bash
 brew tap Coding-Dev-Tools/tap
