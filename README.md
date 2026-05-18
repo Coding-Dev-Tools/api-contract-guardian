@@ -27,6 +27,7 @@ Or install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/Coding-Dev-Tools/api-contract-guardian.git
+```
 
 Or install via Homebrew (macOS/Linux):
 
@@ -40,7 +41,6 @@ Or install via Scoop (Windows):
 ```bash
 scoop bucket add Coding-Dev-Tools https://github.com/Coding-Dev-Tools/scoop-bucket
 scoop install api-contract-guardian
-```
 ```
 
 ## Quick Start
