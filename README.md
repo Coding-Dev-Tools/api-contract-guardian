@@ -56,7 +56,7 @@ api-contract-guardian check --base main --head feature-api-v2 openapi.yaml
 api-contract-guardian migrate spec-v1.yaml spec-v2.yaml --output MIGRATION.md
 
 # CI gating (exits non-zero on breaking changes)
-api-contract-guardian gate spec-v1.yaml spec-v2.yaml
+api-contract-guardian check spec-v1.yaml spec-v2.yaml
 ```
 
 ## Features
@@ -83,18 +83,18 @@ api-contract-guardian gate spec-v1.yaml spec-v2.yaml
 
 ```bash
 # Fail the build if breaking changes are detected
-api-contract-guardian gate spec-v1.yaml spec-v2.yaml || echo "Breaking API changes found!"
+api-contract-guardian check spec-v1.yaml spec-v2.yaml || echo "Breaking API changes found!"
 ```
 
 ## Pricing
 
-API Contract Guardian is one of eight tools in the DevForge suite. One license covers all CLI tools.
+API Contract Guardian is one of eleven CLI tools in the DevForge suite. One license covers all CLI tools.
 
 | Plan | Price | Best For |
 |------|-------|----------|
 | **Free** | $0 | Individual devs, OSS — CLI only, 1 spec comparison |
 | **ACG Individual** | **$19/mo** ($15 billed annually) | Professional devs — unlimited specs, CI/CD gating |
-| **Suite (all 8 tools)** | **$49/mo** ($39 billed annually) | Full DevForge toolkit — 40% savings |
+| **Suite (all 11 CLI tools)** | **$49/mo** ($39 billed annually) | Full DevForge toolkit — 40% savings |
 | **Team** | **$79/mo** ($63 billed annually) | Up to 5 devs — shared dashboards, alerts, run history |
 | **Enterprise** | Custom | SSO, RBAC, compliance reports, dedicated support |
 
@@ -105,7 +105,7 @@ API Contract Guardian is one of eight tools in the DevForge suite. One license c
 
 | Feature | Free | ACG | Suite | Team | Enterprise |
 |---------|:----:|:---:|:-----:|:----:|:----------:|
-| CLI: check, gate, migrate | ✓ | ✓ | ✓ | ✓ | ✓ |
+| CLI: diff, check, migrate | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Unlimited spec comparisons | — | ✓ | ✓ | ✓ | ✓ |
 | CI/CD gating | — | ✓ | ✓ | ✓ | ✓ |
 | Migration guide generation | — | ✓ | ✓ | ✓ | ✓ |
@@ -117,7 +117,7 @@ API Contract Guardian is one of eight tools in the DevForge suite. One license c
 | Priority support | Community | 24h | 24h | 8h | Dedicated |
 
 <p align="center">
-  <sub>Part of <a href="https://coding-dev-tools.github.io/devforge.dev/">DevForge</a> — CLI tools built by autonomous AI.</sub>
+  <sub>Part of <a href="https://coding-dev-tools.github.io/revenueholdings.dev/">DevForge</a> — CLI tools built by autonomous AI.</sub>
 </p>
 
 ## License
