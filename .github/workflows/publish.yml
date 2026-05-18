@@ -40,18 +40,18 @@ jobs:
           python -m build
 
       - name: Publish to PyPI
-        if: \${{ inputs.pypi_target != 'testpypi' || github.event_name == 'release' }}
+        if: ${{ inputs.pypi_target != 'testpypi' || github.event_name == 'release' }}
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: \${{ secrets.PYPI_API_TOKEN }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           twine upload dist/* --verbose
 
       - name: Publish to TestPyPI
-        if: \${{ inputs.pypi_target == 'testpypi' }}
+        if: ${{ inputs.pypi_target == 'testpypi' }}
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: \${{ secrets.TEST_PYPI_API_TOKEN }}
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
         run: |
           twine upload --repository testpypi dist/* --verbose
 
