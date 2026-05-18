@@ -13,6 +13,14 @@ Monitor OpenAPI schema diffs between git branches, detect breaking changes, gene
 [![Open Source Alternative](https://img.shields.io/badge/Open_Source_Alternative-%E2%87%92-blue?logo=opensourceinitiative)](https://www.opensourcealternative.to/project/api-contract-guardian)
 [![LibHunt](https://img.shields.io/badge/LibHunt-%E2%87%92-blue?logo=codeigniter)](https://www.libhunt.com/r/Coding-Dev-Tools/api-contract-guardian)
 
+**Why API Contract Guardian?** Every API team knows the pain: a teammate renames a field, removes an endpoint, or changes a response type — and suddenly mobile apps crash, integrations break, and you're debugging at 2 AM. Manually diffing OpenAPI specs is tedious and error-prone. API Contract Guardian automates this: compare specs between branches, detect every category of breaking change, generate human-readable migration guides, and gate your CI pipeline so breaking changes never reach production unnoticed.
+
+Real-world scenarios:
+- **CI/CD gating**: Block PRs that introduce breaking API changes — catch them before merge, not after deploy
+- **API version upgrades**: When bumping v1 → v2, generate a migration guide for consumers automatically
+- **Microservice contract enforcement**: Ensure service boundaries respect their OpenAPI contracts across deploys
+- **Client SDK regeneration**: Know exactly what changed so SDK clients can be updated with confidence
+
 ## Installation
 
 ```bash
@@ -91,13 +99,13 @@ api-contract-guardian check spec-v1.yaml spec-v2.yaml || echo "Breaking API chan
 
 ## Pricing
 
-API Contract Guardian is one of eight tools in the Revenue Holdings suite. One license covers all CLI tools.
+API Contract Guardian is one of eleven tools in the Revenue Holdings suite. One license covers all CLI tools.
 
 | Plan | Price | Best For |
 |------|-------|----------|
 | **Free** | $0 | Individual devs, OSS — CLI only, 1 spec comparison |
 | **ACG Individual** | **$19/mo** ($15 billed annually) | Professional devs — unlimited specs, CI/CD gating |
-|| **Suite (all 11 tools)** | **$49/mo** ($39 billed annually) | Full Revenue Holdings toolkit — 40% savings |
+| **Suite (all 11 tools)** | **$49/mo** ($39 billed annually) | Full Revenue Holdings toolkit — 40% savings |
 | **Team** | **$79/mo** ($63 billed annually) | Up to 5 devs — shared dashboards, alerts, run history |
 | **Enterprise** | Custom | SSO, RBAC, compliance reports, dedicated support |
 
