@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / compiled files
 __pycache__/
 *.py[cod]
+*.pyc
 *$py.class
 
 # C extensions
@@ -51,7 +52,7 @@ coverage.xml
 
 # Environments
 .env
-.venv
+.venv/
 env/
 venv/
 ENV/
