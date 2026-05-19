@@ -1,5 +1,5 @@
 {
-  "name": "api-contract-guardian",
+  "name": "api-contract-guardian-cli",
   "version": "0.0.4",
   "description": "Prevent API contract violations before they reach production. A CI-friendly CLI tool to validate API calls against an OpenAPI/GraphQL schema",
   "author": "Revenue Holdings <engineering@revenueholdings.dev>",

@@ -1,7 +1,6 @@
 # API Contract Guardian
 
 [![GitHub stars](https://img.shields.io/github/stars/Coding-Dev-Tools/api-contract-guardian?style=social)](https://github.com/Coding-Dev-Tools/api-contract-guardian/stargazers)
-[![Awesome DevOps](https://img.shields.io/badge/Awesome_DevOps-Submitted-grey?logo=github)](https://github.com/wmariuss/awesome-devops)<!-- PR #433 -->
 
 Monitor OpenAPI schema diffs between git branches, detect breaking changes, generate migration guides, and block CI pipelines on contract violations.
 [![CI](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions)
@@ -13,9 +12,14 @@ Monitor OpenAPI schema diffs between git branches, detect breaking changes, gene
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/blob/main/LICENSE)
 [![Open Source Alternative](https://img.shields.io/badge/Open_Source_Alternative-%E2%87%92-blue?logo=opensourceinitiative)](https://www.opensourcealternative.to/project/api-contract-guardian)
 [![LibHunt](https://img.shields.io/badge/LibHunt-%E2%87%92-blue?logo=codeigniter)](https://www.libhunt.com/r/Coding-Dev-Tools/api-contract-guardian)
-[![Awesome Python](https://img.shields.io/badge/Awesome_Python-%E2%87%92-blue?logo=python)](https://github.com/uhub/awesome-python)
 
-**Why API Contract Guardian?** APIs evolve fast, and breaking changes slip into production when the team reviewing the PR doesn't know every detail of every endpoint. API Contract Guardian catches removed endpoints, changed types, renamed fields, and missing required properties at PR time — not after deploy. It generates human-readable migration guides so your API consumers aren't left guessing. Works with OpenAPI 3.0.x and 3.1.x, integrates into CI with a single non-zero exit, and compares specs across branches, tags, commits, or local files.
+**Why API Contract Guardian?** Every API team knows the pain: a teammate renames a field, removes an endpoint, or changes a response type — and suddenly mobile apps crash, integrations break, and you're debugging at 2 AM. Manually diffing OpenAPI specs is tedious and error-prone. API Contract Guardian automates this: compare specs between branches, detect every category of breaking change, generate human-readable migration guides, and gate your CI pipeline so breaking changes never reach production unnoticed.
+
+Real-world scenarios:
+- **CI/CD gating**: Block PRs that introduce breaking API changes — catch them before merge, not after deploy
+- **API version upgrades**: When bumping v1 → v2, generate a migration guide for consumers automatically
+- **Microservice contract enforcement**: Ensure service boundaries respect their OpenAPI contracts across deploys
+- **Client SDK regeneration**: Know exactly what changed so SDK clients can be updated with confidence
 
 ## Installation
 
@@ -95,13 +99,13 @@ api-contract-guardian check spec-v1.yaml spec-v2.yaml || echo "Breaking API chan
 
 ## Pricing
 
-API Contract Guardian is one of eight tools in the Revenue Holdings suite. One license covers all CLI tools.
+API Contract Guardian is one of eleven tools in the Revenue Holdings suite. One license covers all CLI tools.
 
 | Plan | Price | Best For |
 |------|-------|----------|
 | **Free** | $0 | Individual devs, OSS — CLI only, 1 spec comparison |
 | **ACG Individual** | **$19/mo** ($15 billed annually) | Professional devs — unlimited specs, CI/CD gating |
-|| **Suite (all 11 tools)** | **$49/mo** ($39 billed annually) | Full Revenue Holdings toolkit — 40% savings |
+| **Suite (all 11 tools)** | **$49/mo** ($39 billed annually) | Full Revenue Holdings toolkit — 40% savings |
 | **Team** | **$79/mo** ($63 billed annually) | Up to 5 devs — shared dashboards, alerts, run history |
 | **Enterprise** | Custom | SSO, RBAC, compliance reports, dedicated support |
 
