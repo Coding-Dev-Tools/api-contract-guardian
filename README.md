@@ -11,7 +11,6 @@ Monitor OpenAPI schema diffs between git branches, detect breaking changes, gene
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/blob/main/LICENSE)
 [![Open Source Alternative](https://img.shields.io/badge/Open_Source_Alternative-%E2%87%92-blue?logo=opensourceinitiative)](https://www.opensourcealternative.to/project/api-contract-guardian)
-[![LibHunt](https://img.shields.io/badge/LibHunt-%E2%87%92-blue?logo=codeigniter)](https://www.libhunt.com/r/Coding-Dev-Tools/api-contract-guardian)
 
 **Why API Contract Guardian?** Every API team knows the pain: a teammate renames a field, removes an endpoint, or changes a response type — and suddenly mobile apps crash, integrations break, and you're debugging at 2 AM. Manually diffing OpenAPI specs is tedious and error-prone. API Contract Guardian automates this: compare specs between branches, detect every category of breaking change, generate human-readable migration guides, and gate your CI pipeline so breaking changes never reach production unnoticed.
 
@@ -22,12 +21,6 @@ Real-world scenarios:
 - **Client SDK regeneration**: Know exactly what changed so SDK clients can be updated with confidence
 
 ## Installation
-
-```bash
-pip install api-contract-guardian
-```
-
-Or install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/Coding-Dev-Tools/api-contract-guardian.git
@@ -48,9 +41,9 @@ scoop install api-contract-guardian
 ```
 
 
-**npm (Node.js wrapper):**
+**npm (Node.js wrapper — publishing pending):**
 ```bash
-npm install -g api-contract-guardian
+# Not yet available — install via pip instead
 ```
 Then run: `api-contract-guardian --help`
 
