@@ -124,8 +124,8 @@ def check(
     fail_on_dangerous: bool = typer.Option(
         False, "--fail-on-dangerous/--allow-dangerous", help="Fail on dangerous changes",
     ),
-    max_breaking: int = typer.Option(0, "--max-breaking", help="Max allowed breaking changes (default 0)"),
-    max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max allowed dangerous changes (-1=unlimited)"),
+    max_breaking: int = typer.Option(-1, "--max-breaking", help="Max allowed breaking changes (-1=defer to flag, 0=none)"),
+    max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max allowed dangerous changes (-1=defer to flag, 0=none)"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
 ) -> None:
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""

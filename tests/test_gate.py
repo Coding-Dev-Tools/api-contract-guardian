@@ -125,3 +125,15 @@ class TestCheckGate:
         result = _make_result(breaking=3)
         gate = check_gate(result, fail_on_breaking=False, max_breaking=1)
         assert not gate.passed
+
+    def test_fail_on_breaking_false_max_breaking_zero_enforced(self):
+        """max_breaking=0 should still fail even when fail_on_breaking=False."""
+        result = _make_result(breaking=1)
+        gate = check_gate(result, fail_on_breaking=False, max_breaking=0)
+        assert not gate.passed
+
+    def test_fail_on_dangerous_false_max_dangerous_zero_enforced(self):
+        """max_dangerous=0 should still fail even when fail_on_dangerous=False."""
+        result = _make_result(dangerous=1)
+        gate = check_gate(result, fail_on_breaking=False, max_dangerous=0)
+        assert not gate.passed
