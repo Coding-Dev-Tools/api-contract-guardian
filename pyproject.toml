@@ -10,7 +10,6 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [{name = "Revenue Holdings"}]
-urls = {Homepage = "https://github.com/Coding-Dev-Tools/api-contract-guardian", Repository = "https://github.com/Coding-Dev-Tools/api-contract-guardian"}
 keywords = ["openapi", "api", "contract", "breaking-changes", "ci", "diff"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -20,6 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "typer>=0.9.0",
@@ -28,6 +28,13 @@ dependencies = [
     "jsonschema>=4.17.0",
     "deepdiff>=6.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Coding-Dev-Tools/api-contract-guardian"
+Documentation = "https://github.com/Coding-Dev-Tools/api-contract-guardian#readme"
+Repository = "https://github.com/Coding-Dev-Tools/api-contract-guardian"
+Issues = "https://github.com/Coding-Dev-Tools/api-contract-guardian/issues"
+Changelog = "https://github.com/Coding-Dev-Tools/api-contract-guardian/releases"
 
 [project.optional-dependencies]
 license = ["revenueholdings-license>=0.1.0"]
