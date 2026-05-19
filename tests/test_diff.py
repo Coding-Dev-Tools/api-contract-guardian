@@ -546,6 +546,33 @@ class TestSchemaDiff:
         result = diff_specs(old, new)
         assert any(c.kind == "enum_values_removed" for c in result.changes)
 
+    def test_property_enum_values_removed_breaking(self):
+        """Property-level enum value removed is detected as breaking."""
+        old = _make_spec(schemas={
+            "Status": {
+                "type": "object",
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "enum": ["active", "inactive", "pending"],
+                    },
+                },
+            },
+        })
+        new = _make_spec(schemas={
+            "Status": {
+                "type": "object",
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "enum": ["active", "inactive"],
+                    },
+                },
+            },
+        })
+        result = diff_specs(old, new)
+        assert any(c.kind == "enum_values_removed" for c in result.changes)
+
     def test_no_schema_changes(self):
         old = _make_spec(schemas={"User": {"type": "object", "properties": {"id": {"type": "string"}}}})
         new = _make_spec(schemas={"User": {"type": "object", "properties": {"id": {"type": "string"}}}})
