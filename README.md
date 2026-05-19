@@ -11,8 +11,9 @@ Monitor OpenAPI schema diffs between git branches, detect breaking changes, gene
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/blob/main/LICENSE)
 [![Open Source Alternative](https://img.shields.io/badge/Open_Source_Alternative-%E2%87%92-blue?logo=opensourceinitiative)](https://www.opensourcealternative.to/project/api-contract-guardian)
+[![PyPI](https://img.shields.io/pypi/v/api-contract-guardian)](https://pypi.org/project/api-contract-guardian/)
 
-**Why API Contract Guardian?** Every API team knows the pain: a teammate renames a field, removes an endpoint, or changes a response type — and suddenly mobile apps crash, integrations break, and you're debugging at 2 AM. Manually diffing OpenAPI specs is tedious and error-prone. API Contract Guardian automates this: compare specs between branches, detect every category of breaking change, generate human-readable migration guides, and gate your CI pipeline so breaking changes never reach production unnoticed.
+**Why API Contract Guardian?
 
 Real-world scenarios:
 - **CI/CD gating**: Block PRs that introduce breaking API changes — catch them before merge, not after deploy
