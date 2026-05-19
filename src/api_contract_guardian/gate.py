@@ -33,7 +33,7 @@ def check_gate(
     *,
     fail_on_breaking: bool = True,
     fail_on_dangerous: bool = False,
-    max_breaking: int = 0,
+    max_breaking: int = -1,
     max_dangerous: int = -1,
 ) -> GateResult:
     """Check if a diff result passes the CI gate.
@@ -52,21 +52,17 @@ def check_gate(
     dangerous_count = len(result.dangerous_changes)
 
     # Determine effective thresholds
+    # max_breaking >= 0 is an explicit ceiling — always honour it.
+    # When absent (-1, the default), fall back to fail_on_breaking flag.
     if max_breaking >= 0:
-        if fail_on_breaking or max_breaking > 0:  # noqa: SIM108
-            effective_max_breaking = max_breaking
-        else:
-            effective_max_breaking = -1 # unlimited
+        effective_max_breaking = max_breaking
     elif fail_on_breaking:
         effective_max_breaking = 0   # default: zero tolerance
     else:
         effective_max_breaking = -1  # unlimited
 
     if max_dangerous >= 0:
-        if fail_on_dangerous or max_dangerous > 0:  # noqa: SIM108
-            effective_max_dangerous = max_dangerous
-        else:
-            effective_max_dangerous = -1 # unlimited
+        effective_max_dangerous = max_dangerous
     elif fail_on_dangerous:
         effective_max_dangerous = 0   # default: zero tolerance
     else:
