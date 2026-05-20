@@ -103,6 +103,13 @@ class TestLoadSpec:
         spec = load_spec(p)
         assert spec["openapi"] == "3.0.3"
 
+    def test_load_unknown_extension_both_parse_fail_raises(self, tmp_path):
+        """Unknown extension with unparseable content raises SpecLoadError."""
+        p = tmp_path / "spec.txt"
+        p.write_text("{{{{not yaml or json}}}}", encoding="utf-8")
+        with pytest.raises(SpecLoadError, match="Cannot parse"):
+            load_spec(p)
+
 
 # ── load_spec_from_string tests ──
 
