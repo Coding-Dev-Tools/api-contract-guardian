@@ -215,6 +215,37 @@ def _diff_operation_details(
             description=f"{method.upper()} {path} is now deprecated",
         ))
 
+    # Check operationId changes
+    old_op_id = old_op.get("operationId")
+    new_op_id = new_op.get("operationId")
+    if old_op_id and not new_op_id:
+        result.changes.append(Change(
+            kind="operation_id_removed",
+            severity=Severity.BREAKING,
+            path=op_path,
+            description=f"{method.upper()} {path} operationId '{old_op_id}' was removed",
+            old_value=old_op_id,
+            new_value=None,
+        ))
+    elif not old_op_id and new_op_id:
+        result.changes.append(Change(
+            kind="operation_id_added",
+            severity=Severity.NON_BREAKING,
+            path=op_path,
+            description=f"{method.upper()} {path} operationId '{new_op_id}' was added",
+            old_value=None,
+            new_value=new_op_id,
+        ))
+    elif old_op_id and new_op_id and old_op_id != new_op_id:
+        result.changes.append(Change(
+            kind="operation_id_changed",
+            severity=Severity.BREAKING,
+            path=op_path,
+            description=f"{method.upper()} {path} operationId changed from '{old_op_id}' to '{new_op_id}'",
+            old_value=old_op_id,
+            new_value=new_op_id,
+        ))
+
     # Check if operation became required (new required param)
     # Handled in _diff_parameters
 

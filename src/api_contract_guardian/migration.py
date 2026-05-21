@@ -163,6 +163,14 @@ def _generate_steps(breaking_changes: list[Change]) -> list[str]:
     if removed_content_types:
         steps.append("Update content-type handling for removed content types")
 
+    op_id_changes = [
+        c for c in breaking_changes
+        if c.kind in ("operation_id_removed", "operation_id_changed")
+    ]
+    if op_id_changes:
+        ops = ", ".join(f"`{c.path}`" for c in op_id_changes)
+        steps.append(f"Update SDK codegen references for changed/removed operationIds: {ops}")
+
     if not steps:
         steps.append("Review breaking changes and update client code accordingly")
 
