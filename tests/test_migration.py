@@ -232,6 +232,25 @@ class TestMigrationStepGeneration:
         assert "Update enum value references" in guide
 
 
+    def test_operation_id_removed_step(self):
+        """operation_id_removed produces an SDK codegen migration step."""
+        changes = [
+            Change(kind="operation_id_removed", severity=Severity.BREAKING, path="paths./users.get", description="operationId removed")
+        ]
+        result = _make_result(changes=changes)
+        guide = generate_migration_guide(result)
+        assert "operationIds" in guide
+
+    def test_operation_id_changed_step(self):
+        """operation_id_changed produces an SDK codegen migration step."""
+        changes = [
+            Change(kind="operation_id_changed", severity=Severity.BREAKING, path="paths./users.get", description="operationId changed")
+        ]
+        result = _make_result(changes=changes)
+        guide = generate_migration_guide(result)
+        assert "operationIds" in guide
+
+
 class TestGenerateMigrationGuideJson:
     def test_empty_changes(self):
         result = _make_result()

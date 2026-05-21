@@ -658,6 +658,74 @@ class TestInfoDiff:
 # ── Integration / complex scenario tests ──
 
 
+class TestOperationIdDiff:
+    """Tests for operationId change detection."""
+
+    def test_operation_id_removed_breaking(self):
+        """Removing an operationId is breaking (SDK codegen breaks)."""
+        old = _make_spec(paths={
+            "/users": {"get": {"operationId": "listUsers", "responses": {"200": {"description": "OK"}}}},
+        })
+        new = _make_spec(paths={
+            "/users": {"get": {"responses": {"200": {"description": "OK"}}}},
+        })
+        result = diff_specs(old, new)
+        assert any(c.kind == "operation_id_removed" and c.severity == Severity.BREAKING for c in result.changes)
+        removed = [c for c in result.changes if c.kind == "operation_id_removed"][0]
+        assert removed.old_value == "listUsers"
+
+    def test_operation_id_added_non_breaking(self):
+        """Adding an operationId is non-breaking."""
+        old = _make_spec(paths={
+            "/users": {"get": {"responses": {"200": {"description": "OK"}}}},
+        })
+        new = _make_spec(paths={
+            "/users": {"get": {"operationId": "listUsers", "responses": {"200": {"description": "OK"}}}},
+        })
+        result = diff_specs(old, new)
+        assert any(c.kind == "operation_id_added" and c.severity == Severity.NON_BREAKING for c in result.changes)
+        added = [c for c in result.changes if c.kind == "operation_id_added"][0]
+        assert added.new_value == "listUsers"
+
+    def test_operation_id_changed_breaking(self):
+        """Changing an operationId is breaking (SDK references break)."""
+        old = _make_spec(paths={
+            "/users": {"get": {"operationId": "listUsers", "responses": {"200": {"description": "OK"}}}},
+        })
+        new = _make_spec(paths={
+            "/users": {"get": {"operationId": "getUsers", "responses": {"200": {"description": "OK"}}}},
+        })
+        result = diff_specs(old, new)
+        assert any(c.kind == "operation_id_changed" and c.severity == Severity.BREAKING for c in result.changes)
+        changed = [c for c in result.changes if c.kind == "operation_id_changed"][0]
+        assert changed.old_value == "listUsers"
+        assert changed.new_value == "getUsers"
+
+    def test_operation_id_unchanged_no_change(self):
+        """Identical operationIds produce no change."""
+        old = _make_spec(paths={
+            "/users": {"get": {"operationId": "listUsers", "responses": {"200": {"description": "OK"}}}},
+        })
+        new = _make_spec(paths={
+            "/users": {"get": {"operationId": "listUsers", "responses": {"200": {"description": "OK"}}}},
+        })
+        result = diff_specs(old, new)
+        op_id_changes = [c for c in result.changes if "operation_id" in c.kind]
+        assert len(op_id_changes) == 0
+
+    def test_neither_has_operation_id_no_change(self):
+        """No operationId on either side produces no change."""
+        old = _make_spec(paths={
+            "/users": {"get": {"responses": {"200": {"description": "OK"}}}},
+        })
+        new = _make_spec(paths={
+            "/users": {"get": {"responses": {"200": {"description": "OK"}}}},
+        })
+        result = diff_specs(old, new)
+        op_id_changes = [c for c in result.changes if "operation_id" in c.kind]
+        assert len(op_id_changes) == 0
+
+
 class TestDiffIntegration:
     def test_identical_specs_no_changes(self):
         spec = _make_spec(paths={"/users": {"get": {"responses": {"200": {"description": "OK"}}}}})
