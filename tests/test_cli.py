@@ -87,6 +87,33 @@ def _dangerous_specs():
     return _write_yaml(old), _write_yaml(new)
 
 
+def _nonbreaking_info_specs():
+    """Return two specs producing non-breaking (new path) + info (new server) changes."""
+    old = {
+        "openapi": "3.0.3",
+        "info": {"title": "Test API", "version": "1.0.0"},
+        "paths": {
+            "/users": {
+                "get": {"responses": {"200": {"description": "List users"}}},
+            },
+        },
+    }
+    new = {
+        "openapi": "3.0.3",
+        "info": {"title": "Test API", "version": "1.0.0"},
+        "paths": {
+            "/users": {
+                "get": {"responses": {"200": {"description": "List users"}}},
+            },
+            "/posts": {
+                "get": {"responses": {"200": {"description": "List posts"}}},
+            },
+        },
+        "servers": [{"url": "https://api.example.com/v2"}],
+    }
+    return _write_yaml(old), _write_yaml(new)
+
+
 class TestVersionCommand:
     """Tests for the ``version`` subcommand."""
 
@@ -156,6 +183,21 @@ class TestDiffCommand:
             os.unlink(new_path)
             if os.path.isfile(out_path):
                 os.unlink(out_path)
+
+    def test_diff_rich_all_categories(self):
+        """diff default (rich) format shows non-breaking and info sections when present."""
+        old_path, new_path = _nonbreaking_info_specs()
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path])
+            assert result.exit_code == 0
+            assert "Change Summary" in result.output
+            assert "Non-Breaking Changes" in result.output
+            assert "path_added" in result.output
+            assert "Informational" in result.output
+            assert "server_added" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
 
     def test_diff_invalid_file(self):
         """diff exits with code 1 for a non-existent file."""
@@ -295,6 +337,24 @@ class TestMigrateCommand:
             with open(out_path) as f:
                 content = f.read()
             assert len(content) > 0
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
+
+    def test_migrate_json_output_file(self):
+        """migrate --format json --output writes structured JSON to a file."""
+        old_path, new_path = _nonbreaking_info_specs()
+        out_path = tempfile.mktemp(suffix=".json")
+        try:
+            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "json", "--output", out_path])
+            assert result.exit_code == 0
+            assert os.path.isfile(out_path)
+            with open(out_path) as f:
+                content = f.read()
+            assert "summary" in content
+            assert "non_breaking" in content or "non-breaking" in content
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
