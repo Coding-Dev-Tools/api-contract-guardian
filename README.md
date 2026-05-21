@@ -54,9 +54,6 @@ Then run: `api-contract-guardian --help`
 # Compare two spec files
 api-contract-guardian check spec-v1.yaml spec-v2.yaml
 
-# Compare git branches
-api-contract-guardian check --base main --head feature-api-v2 openapi.yaml
-
 # Generate migration guide
 api-contract-guardian migrate spec-v1.yaml spec-v2.yaml --output MIGRATION.md
 

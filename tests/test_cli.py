@@ -205,6 +205,73 @@ class TestDiffCommand:
         assert result.exit_code == 1
         assert "Error loading" in result.output
 
+    def test_diff_markdown_format(self):
+        """diff --format markdown produces migration guide output."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "markdown"])
+            assert result.exit_code == 0
+            assert "Migration Guide" in result.output or "breaking" in result.output.lower()
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_diff_markdown_output_file(self):
+        """diff --format markdown --output writes migration guide to file."""
+        old_path, new_path = _identical_specs()
+        out_path = tempfile.mktemp(suffix=".md")
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "markdown", "--output", out_path])
+            assert result.exit_code == 0
+            assert os.path.isfile(out_path)
+            with open(out_path) as f:
+                content = f.read()
+            assert len(content) > 0
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
+
+    def test_diff_json_output_file(self):
+        """diff --format json --output writes JSON to a file."""
+        old_path, new_path = _identical_specs()
+        out_path = tempfile.mktemp(suffix=".json")
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "json", "--output", out_path])
+            assert result.exit_code == 0
+            assert os.path.isfile(out_path)
+            with open(out_path) as f:
+                content = f.read()
+            assert "summary" in content
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
+
+    def test_diff_invalid_openapi_version(self):
+        """diff exits with code 1 when given a Swagger 2.0 (unsupported) spec."""
+        old = {
+            "swagger": "2.0",
+            "info": {"title": "Swagger Petstore", "version": "1.0.0"},
+            "paths": {},
+        }
+        new = {
+            "swagger": "2.0",
+            "info": {"title": "Swagger Petstore", "version": "1.0.0"},
+            "paths": {},
+        }
+        old_path = _write_yaml(old)
+        new_path = _write_yaml(new)
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path])
+            assert result.exit_code == 1
+            assert "Error validating" in result.output or "not supported" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
 
 class TestCheckCommand:
     """Tests for the ``check`` (CI gating) subcommand."""
@@ -299,6 +366,28 @@ class TestCheckCommand:
             os.unlink(new_path)
             if os.path.isfile(out_path):
                 os.unlink(out_path)
+
+    def test_check_invalid_openapi_version(self):
+        """check exits with code 1 when given a Swagger 2.0 (unsupported) spec."""
+        old = {
+            "swagger": "2.0",
+            "info": {"title": "Swagger Petstore", "version": "1.0.0"},
+            "paths": {},
+        }
+        new = {
+            "swagger": "2.0",
+            "info": {"title": "Swagger Petstore", "version": "1.0.0"},
+            "paths": {},
+        }
+        old_path = _write_yaml(old)
+        new_path = _write_yaml(new)
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path])
+            assert result.exit_code == 1
+            assert "Error validating" in result.output or "not supported" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
 
 
 class TestMigrateCommand:
