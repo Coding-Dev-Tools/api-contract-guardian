@@ -5,10 +5,8 @@ from __future__ import annotations
 import os
 import tempfile
 import yaml
-
-from typer.testing import CliRunner
-
 from api_contract_guardian.cli import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -18,10 +16,9 @@ runner = CliRunner()
 
 def _write_yaml(data: dict) -> str:
     """Write a YAML file and return its path."""
-    f = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
-    yaml.dump(data, f)
-    f.close()
-    return f.name
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        yaml.dump(data, f)
+        return f.name
 
 
 # ── Fixtures ──
@@ -61,6 +58,29 @@ def _breaking_specs():
         "paths": {
             "/users": {
                 "get": {"responses": {"200": {"description": "List users"}}},
+            },
+        },
+    }
+    return _write_yaml(old), _write_yaml(new)
+
+
+def _dangerous_specs():
+    """Return two specs where an operation is deprecated (dangerous change)."""
+    old = {
+        "openapi": "3.0.3",
+        "info": {"title": "Test API", "version": "1.0.0"},
+        "paths": {
+            "/users": {
+                "get": {"responses": {"200": {"description": "List users"}}},
+            },
+        },
+    }
+    new = {
+        "openapi": "3.0.3",
+        "info": {"title": "Test API", "version": "1.0.0"},
+        "paths": {
+            "/users": {
+                "get": {"deprecated": True, "responses": {"200": {"description": "List users"}}},
             },
         },
     }
@@ -165,6 +185,37 @@ class TestCheckCommand:
             result = runner.invoke(app, ["check", old_path, new_path])
             assert result.exit_code == 1
             assert "breaking" in result.output.lower()
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_check_with_dangerous_changes(self):
+        """check passes by default with only dangerous changes."""
+        old_path, new_path = _dangerous_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path])
+            assert result.exit_code == 0
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_check_fail_on_dangerous(self):
+        """check fails (exit 1) when --fail-on-dangerous is set and dangerous changes exist."""
+        old_path, new_path = _dangerous_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--fail-on-dangerous"])
+            assert result.exit_code == 1
+            assert "dangerous" in result.output.lower()
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_check_max_dangerous_within_limit(self):
+        """check passes when --max-dangerous exceeds the count of dangerous changes."""
+        old_path, new_path = _dangerous_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--max-dangerous", "3"])
+            assert result.exit_code == 0
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
