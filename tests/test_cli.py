@@ -479,3 +479,20 @@ class TestMCPCommand:
         """mcp subcommand is listed in help."""
         result = runner.invoke(app, ["--help"])
         assert "mcp" in result.output
+
+
+class TestMainModule:
+    """Tests for the ``python -m`` entry point (__main__.py)."""
+
+    def test_main_module_version(self):
+        """python -m api_contract_guardian version prints version."""
+        import subprocess
+        import sys
+        result = subprocess.run(
+            [sys.executable, "-m", "api_contract_guardian", "version"],
+            capture_output=True,
+            text=True,
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        )
+        assert result.returncode == 0
+        assert "v0.1.0" in result.stdout
