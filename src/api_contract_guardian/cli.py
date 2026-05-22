@@ -8,6 +8,7 @@ import yaml
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
+import yaml
 
 from .diff import DiffResult, diff_specs
 from .gate import check_gate
