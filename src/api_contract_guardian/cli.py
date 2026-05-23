@@ -8,7 +8,6 @@ import yaml
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-import yaml
 
 from .diff import DiffResult, diff_specs
 from .gate import check_gate
@@ -19,7 +18,6 @@ try:
     from revenueholdings_license import require_license
 except ImportError:
     require_license = None
-
 
 def _validate_output_format(format_name: str, allowed: tuple[str, ...], command: str) -> str:
     """Reject unsupported output formats before the command runs."""
