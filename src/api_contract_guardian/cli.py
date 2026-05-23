@@ -19,6 +19,7 @@ try:
 except ImportError:
     require_license = None
 
+
 def _validate_output_format(format_name: str, allowed: tuple[str, ...], command: str) -> str:
     """Reject unsupported output formats before the command runs."""
     if format_name not in allowed:
