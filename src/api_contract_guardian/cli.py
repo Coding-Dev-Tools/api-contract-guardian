@@ -4,15 +4,21 @@ from __future__ import annotations
 
 import json
 import typer
+import yaml
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-import yaml
+
+from .diff import DiffResult, diff_specs
+from .gate import check_gate
+from .loader import SpecLoadError, load_spec, validate_openapi_version
+from .migration import generate_migration_guide, generate_migration_guide_json
 
 try:
     from revenueholdings_license import require_license
 except ImportError:
     require_license = None
+
 
 def _validate_output_format(format_name: str, allowed: tuple[str, ...], command: str) -> str:
     """Reject unsupported output formats before the command runs."""
@@ -22,11 +28,6 @@ def _validate_output_format(format_name: str, allowed: tuple[str, ...], command:
             f"Unsupported {command} format '{format_name}'. Choose from: {allowed_list}"
         )
     return format_name
-
-from .diff import DiffResult, diff_specs
-from .gate import check_gate
-from .loader import SpecLoadError, load_spec, validate_openapi_version
-from .migration import generate_migration_guide, generate_migration_guide_json
 
 app = typer.Typer(
     name="api-contract-guardian",
