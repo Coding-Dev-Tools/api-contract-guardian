@@ -396,6 +396,36 @@ class TestCheckCommand:
             if os.path.isfile(out_path):
                 os.unlink(out_path)
 
+    def test_check_json_format(self):
+        """check --format json outputs the structured gate payload."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--format", "json"])
+            assert result.exit_code == 0
+            assert '"gate"' in result.output
+            assert '"diff"' in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_check_yaml_output_file(self):
+        """check --format yaml --output writes YAML to a file."""
+        old_path, new_path = _identical_specs()
+        out_path = tempfile.mktemp(suffix=".yaml")
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--format", "yaml", "--output", out_path])
+            assert result.exit_code == 0
+            assert os.path.isfile(out_path)
+            with open(out_path) as f:
+                content = f.read()
+            assert "gate:" in content
+            assert "diff:" in content
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
+
     def test_check_invalid_openapi_version(self):
         """check exits with code 1 when given a Swagger 2.0 (unsupported) spec."""
         old = {

@@ -135,6 +135,7 @@ def check(
     max_breaking: int = typer.Option(-1, "--max-breaking", help="Max allowed breaking changes (-1=defer to flag, 0=none)"),
     max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max allowed dangerous changes (-1=defer to flag, 0=none)"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, yaml"),
 ) -> None:
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
     if require_license:
@@ -156,16 +157,31 @@ def check(
     else:
         console.print(f"[red bold]{gate_result.message}[/red bold]")
 
-    # Still show the summary
-    _print_result(result)
-
-    if output:
-        output_data = json.dumps({
+    if format == "rich":
+        # Still show the summary for human-friendly output.
+        _print_result(result)
+    else:
+        payload = {
             "gate": gate_result.to_dict(),
             "diff": result.to_dict(),
-        }, indent=2)
+        }
+        if format == "yaml":
+            output_data = yaml.safe_dump(payload, sort_keys=False, default_flow_style=False)
+        else:
+            output_data = json.dumps(payload, indent=2)
+        console.print(output_data)
+
+    if output:
+        payload = {
+            "gate": gate_result.to_dict(),
+            "diff": result.to_dict(),
+        }
+        if format == "yaml":
+            output_data = yaml.safe_dump(payload, sort_keys=False, default_flow_style=False)
+        else:
+            output_data = json.dumps(payload, indent=2)
         Path(output).write_text(output_data, encoding="utf-8")
-        console.print(f"\nJSON output written to {output}")
+        console.print(f"\nWritten to {output}")
 
     raise typer.Exit(code=gate_result.exit_code)
 
