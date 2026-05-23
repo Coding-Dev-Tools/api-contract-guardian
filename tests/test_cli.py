@@ -419,6 +419,17 @@ class TestCheckCommand:
             os.unlink(old_path)
             os.unlink(new_path)
 
+    def test_check_invalid_format(self):
+        """check rejects unsupported output formats instead of falling back silently."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--format", "csv"])
+            assert result.exit_code != 0
+            assert "Unsupported check format" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
     def test_check_yaml_output_file(self):
         """check --format yaml --output writes YAML to a file."""
         old_path, new_path = _identical_specs()
