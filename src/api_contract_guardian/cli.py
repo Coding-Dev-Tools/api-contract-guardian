@@ -14,6 +14,15 @@ try:
 except ImportError:
     require_license = None
 
+def _validate_output_format(format_name: str, allowed: tuple[str, ...], command: str) -> str:
+    """Reject unsupported output formats before the command runs."""
+    if format_name not in allowed:
+        allowed_list = ", ".join(allowed)
+        raise typer.BadParameter(
+            f"Unsupported {command} format '{format_name}'. Choose from: {allowed_list}"
+        )
+    return format_name
+
 from .diff import DiffResult, diff_specs
 from .gate import check_gate
 from .loader import SpecLoadError, load_spec, validate_openapi_version
@@ -88,6 +97,7 @@ def diff(
     """Compare two OpenAPI specs and show all detected changes."""
     if require_license:
         require_license("api-contract-guardian")
+    format = _validate_output_format(format, ("rich", "json", "yaml", "markdown"), "diff")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
@@ -140,6 +150,7 @@ def check(
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
     if require_license:
         require_license("api-contract-guardian")
+    format = _validate_output_format(format, ("rich", "json", "yaml"), "check")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
@@ -196,6 +207,7 @@ def migrate(
     """Generate a migration guide between two OpenAPI spec versions."""
     if require_license:
         require_license("api-contract-guardian")
+    format = _validate_output_format(format, ("markdown", "json", "yaml"), "migrate")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 

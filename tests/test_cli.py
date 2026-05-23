@@ -205,6 +205,17 @@ class TestDiffCommand:
         assert result.exit_code == 1
         assert "Error loading" in result.output
 
+    def test_diff_invalid_format(self):
+        """diff rejects unsupported output formats instead of falling back silently."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "csv"])
+            assert result.exit_code == 2
+            assert "Unsupported diff format" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
     def test_diff_markdown_format(self):
         """diff --format markdown produces migration guide output."""
         old_path, new_path = _identical_specs()
