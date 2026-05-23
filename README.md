@@ -61,11 +61,19 @@ api-contract-guardian migrate spec-v1.yaml spec-v2.yaml --output MIGRATION.md
 api-contract-guardian check spec-v1.yaml spec-v2.yaml
 ```
 
+For machine-readable output, use --format yaml or --format json.
+
+Example commands:
+
+api-contract-guardian check spec-v1.yaml spec-v2.yaml --format yaml --output contract-diff.yaml
+
+api-contract-guardian migrate spec-v1.yaml spec-v2.yaml --format json --output MIGRATION.json
+
 ## Features
 
 - **Breaking Change Detection**: Identifies removed endpoints, changed types, renamed fields, removed properties, and more
 - **Migration Guide Generation**: Produces human-readable markdown migration guides
-- **Multiple Output Formats**: Rich (terminal), JSON, YAML, or Markdown
+- **Multiple Output Formats**: Rich (terminal), JSON, YAML, or Markdown for `diff` and `migrate`; Rich, JSON, or YAML for `check`
 - **CI Gating**: Exits with non-zero code when breaking changes are detected
 - **OpenAPI 3.x Support**: Full support for OpenAPI 3.0.x and 3.1.x specs
 - **Git Branch Diffing**: Compare specs between branches, tags, or commits
@@ -126,4 +134,3 @@ API Contract Guardian is one of eleven tools in the Revenue Holdings suite. One 
 ## License
 
 MIT
-

@@ -4,20 +4,30 @@ from __future__ import annotations
 
 import json
 import typer
+import yaml
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-import yaml
+
+from .diff import DiffResult, diff_specs
+from .gate import check_gate
+from .loader import SpecLoadError, load_spec, validate_openapi_version
+from .migration import generate_migration_guide, generate_migration_guide_json
 
 try:
     from revenueholdings_license import require_license
 except ImportError:
     require_license = None
 
-from .diff import DiffResult, diff_specs
-from .gate import check_gate
-from .loader import SpecLoadError, load_spec, validate_openapi_version
-from .migration import generate_migration_guide, generate_migration_guide_json
+
+def _validate_output_format(format_name: str, allowed: tuple[str, ...], command: str) -> str:
+    """Reject unsupported output formats before the command runs."""
+    if format_name not in allowed:
+        allowed_list = ", ".join(allowed)
+        raise typer.BadParameter(
+            f"Unsupported {command} format '{format_name}'. Choose from: {allowed_list}"
+        )
+    return format_name
 
 app = typer.Typer(
     name="api-contract-guardian",
@@ -88,6 +98,7 @@ def diff(
     """Compare two OpenAPI specs and show all detected changes."""
     if require_license:
         require_license("api-contract-guardian")
+    format = _validate_output_format(format, ("rich", "json", "yaml", "markdown"), "diff")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
@@ -135,10 +146,12 @@ def check(
     max_breaking: int = typer.Option(-1, "--max-breaking", help="Max allowed breaking changes (-1=defer to flag, 0=none)"),
     max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max allowed dangerous changes (-1=defer to flag, 0=none)"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, yaml"),
 ) -> None:
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
     if require_license:
         require_license("api-contract-guardian")
+    format = _validate_output_format(format, ("rich", "json", "yaml"), "check")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
@@ -156,16 +169,31 @@ def check(
     else:
         console.print(f"[red bold]{gate_result.message}[/red bold]")
 
-    # Still show the summary
-    _print_result(result)
-
-    if output:
-        output_data = json.dumps({
+    if format == "rich":
+        # Still show the summary for human-friendly output.
+        _print_result(result)
+    else:
+        payload = {
             "gate": gate_result.to_dict(),
             "diff": result.to_dict(),
-        }, indent=2)
+        }
+        if format == "yaml":
+            output_data = yaml.safe_dump(payload, sort_keys=False, default_flow_style=False)
+        else:
+            output_data = json.dumps(payload, indent=2)
+        console.print(output_data)
+
+    if output:
+        payload = {
+            "gate": gate_result.to_dict(),
+            "diff": result.to_dict(),
+        }
+        if format == "yaml":
+            output_data = yaml.safe_dump(payload, sort_keys=False, default_flow_style=False)
+        else:
+            output_data = json.dumps(payload, indent=2)
         Path(output).write_text(output_data, encoding="utf-8")
-        console.print(f"\nJSON output written to {output}")
+        console.print(f"\nWritten to {output}")
 
     raise typer.Exit(code=gate_result.exit_code)
 
@@ -180,6 +208,7 @@ def migrate(
     """Generate a migration guide between two OpenAPI spec versions."""
     if require_license:
         require_license("api-contract-guardian")
+    format = _validate_output_format(format, ("markdown", "json", "yaml"), "migrate")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 

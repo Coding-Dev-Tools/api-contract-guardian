@@ -205,6 +205,17 @@ class TestDiffCommand:
         assert result.exit_code == 1
         assert "Error loading" in result.output
 
+    def test_diff_invalid_format(self):
+        """diff rejects unsupported output formats instead of falling back silently."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "csv"])
+            assert result.exit_code == 2
+            assert "Unsupported diff format" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
     def test_diff_markdown_format(self):
         """diff --format markdown produces migration guide output."""
         old_path, new_path = _identical_specs()
@@ -396,6 +407,50 @@ class TestCheckCommand:
             if os.path.isfile(out_path):
                 os.unlink(out_path)
 
+    def test_check_json_format(self):
+        """check --format json outputs the structured gate payload."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--format", "json"])
+            assert result.exit_code == 0
+            assert '"gate"' in result.output
+            assert '"diff"' in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_check_invalid_format(self):
+        """check rejects unsupported output formats instead of falling back silently."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--format", "csv"])
+            assert result.exit_code != 0
+            assert "Unsupported check format" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_check_yaml_output_file(self):
+        """check --format yaml --output writes YAML to a file."""
+        old_path, new_path = _identical_specs()
+        out_path = tempfile.mktemp(suffix=".yaml")
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--format", "yaml", "--output", out_path])
+            assert result.exit_code == 0
+            assert os.path.isfile(out_path)
+            with open(out_path) as f:
+                content = f.read()
+            payload = yaml.safe_load(content)
+            assert isinstance(payload, dict)
+            assert "gate" in payload
+            assert "diff" in payload
+            assert payload["gate"]["passed"] is True
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
+
     def test_check_invalid_openapi_version(self):
         """check exits with code 1 when given a Swagger 2.0 (unsupported) spec."""
         old = {
@@ -507,6 +562,17 @@ class TestMigrateCommand:
             os.unlink(new_path)
             if os.path.isfile(out_path):
                 os.unlink(out_path)
+
+    def test_migrate_invalid_format(self):
+        """migrate rejects unsupported output formats instead of falling back silently."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "csv"])
+            assert result.exit_code == 2
+            assert "Unsupported migrate format" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
 
     def test_migrate_invalid_input(self):
         """migrate exits with code 1 for invalid files."""
