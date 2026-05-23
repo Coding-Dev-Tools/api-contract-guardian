@@ -7,6 +7,7 @@ import typer
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
+import yaml
 
 try:
     from revenueholdings_license import require_license
@@ -82,7 +83,7 @@ def diff(
     old: str = typer.Argument(..., help="Path to old (baseline) OpenAPI spec"),
     new: str = typer.Argument(..., help="Path to new (proposed) OpenAPI spec"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
-    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, markdown"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, yaml, markdown"),
 ) -> None:
     """Compare two OpenAPI specs and show all detected changes."""
     if require_license:
@@ -94,6 +95,13 @@ def diff(
 
     if format == "json":
         output_data = json.dumps(result.to_dict(), indent=2)
+        if output:
+            Path(output).write_text(output_data, encoding="utf-8")
+            console.print(f"Written to {output}")
+        else:
+            console.print(output_data)
+    elif format == "yaml":
+        output_data = yaml.safe_dump(result.to_dict(), sort_keys=False, default_flow_style=False)
         if output:
             Path(output).write_text(output_data, encoding="utf-8")
             console.print(f"Written to {output}")
@@ -167,7 +175,7 @@ def migrate(
     old: str = typer.Argument(..., help="Path to old (baseline) OpenAPI spec"),
     new: str = typer.Argument(..., help="Path to new (proposed) OpenAPI spec"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
-    format: str = typer.Option("markdown", "--format", "-f", help="Output format: markdown, json"),
+    format: str = typer.Option("markdown", "--format", "-f", help="Output format: markdown, json, yaml"),
 ) -> None:
     """Generate a migration guide between two OpenAPI spec versions."""
     if require_license:
@@ -180,6 +188,9 @@ def migrate(
     if format == "json":
         guide = generate_migration_guide_json(result)
         content = json.dumps(guide, indent=2)
+    elif format == "yaml":
+        guide = generate_migration_guide_json(result)
+        content = yaml.safe_dump(guide, sort_keys=False, default_flow_style=False)
     else:
         content = generate_migration_guide(result)
 

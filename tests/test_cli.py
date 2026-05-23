@@ -233,6 +233,35 @@ class TestDiffCommand:
             if os.path.isfile(out_path):
                 os.unlink(out_path)
 
+    def test_diff_yaml_format(self):
+        """diff --format yaml outputs valid YAML with no changes."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "yaml"])
+            assert result.exit_code == 0
+            assert "breaking: 0" in result.output
+            assert "old_version" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_diff_yaml_output_file(self):
+        """diff --format yaml --output writes YAML to a file."""
+        old_path, new_path = _identical_specs()
+        out_path = tempfile.mktemp(suffix=".yaml")
+        try:
+            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "yaml", "--output", out_path])
+            assert result.exit_code == 0
+            assert os.path.isfile(out_path)
+            with open(out_path) as f:
+                content = f.read()
+            assert "breaking: 0" in content
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
+
     def test_diff_json_output_file(self):
         """diff --format json --output writes JSON to a file."""
         old_path, new_path = _identical_specs()
@@ -426,6 +455,35 @@ class TestMigrateCommand:
             with open(out_path) as f:
                 content = f.read()
             assert len(content) > 0
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
+
+    def test_migrate_yaml_format(self):
+        """migrate --format yaml outputs YAML migration guide."""
+        old_path, new_path = _nonbreaking_info_specs()
+        try:
+            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "yaml"])
+            assert result.exit_code == 0
+            assert "summary" in result.output or "changes" in result.output
+            assert "warning:" in result.output.lower() or "non_breaking" in result.output or "old_version" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_migrate_yaml_output_file(self):
+        """migrate --format yaml --output writes YAML to a file."""
+        old_path, new_path = _nonbreaking_info_specs()
+        out_path = tempfile.mktemp(suffix=".yaml")
+        try:
+            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "yaml", "--output", out_path])
+            assert result.exit_code == 0
+            assert os.path.isfile(out_path)
+            with open(out_path) as f:
+                content = f.read()
+            assert "non_breaking" in content or "old_version" in content
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
