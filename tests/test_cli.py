@@ -552,6 +552,17 @@ class TestMigrateCommand:
             if os.path.isfile(out_path):
                 os.unlink(out_path)
 
+    def test_migrate_invalid_format(self):
+        """migrate rejects unsupported output formats instead of falling back silently."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "csv"])
+            assert result.exit_code == 2
+            assert "Unsupported migrate format" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
     def test_migrate_invalid_input(self):
         """migrate exits with code 1 for invalid files."""
         result = runner.invoke(app, ["migrate", "no-such-file.yaml", "also-missing.yaml"])

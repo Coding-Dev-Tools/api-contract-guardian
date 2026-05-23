@@ -61,6 +61,14 @@ api-contract-guardian migrate spec-v1.yaml spec-v2.yaml --output MIGRATION.md
 api-contract-guardian check spec-v1.yaml spec-v2.yaml
 ```
 
+For machine-readable output, use --format yaml or --format json.
+
+Example commands:
+
+api-contract-guardian check spec-v1.yaml spec-v2.yaml --format yaml --output contract-diff.yaml
+
+api-contract-guardian migrate spec-v1.yaml spec-v2.yaml --format json --output MIGRATION.json
+
 ## Features
 
 - **Breaking Change Detection**: Identifies removed endpoints, changed types, renamed fields, removed properties, and more
