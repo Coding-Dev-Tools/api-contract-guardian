@@ -418,8 +418,11 @@ class TestCheckCommand:
             assert os.path.isfile(out_path)
             with open(out_path) as f:
                 content = f.read()
-            assert "gate:" in content
-            assert "diff:" in content
+            payload = yaml.safe_load(content)
+            assert isinstance(payload, dict)
+            assert "gate" in payload
+            assert "diff" in payload
+            assert payload["gate"]["passed"] is True
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
