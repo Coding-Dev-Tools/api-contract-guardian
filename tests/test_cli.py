@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import os
 import tempfile
+
 import yaml
-from api_contract_guardian.cli import app
 from typer.testing import CliRunner
+
+from api_contract_guardian.cli import app
 
 runner = CliRunner()
 

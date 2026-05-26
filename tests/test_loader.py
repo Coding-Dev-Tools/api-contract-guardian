@@ -1,8 +1,10 @@
 """Tests for the loader module."""
 
 import json
+
 import pytest
 import yaml
+
 from api_contract_guardian.loader import (
     SpecLoadError,
     get_operations,
