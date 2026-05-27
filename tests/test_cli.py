@@ -612,6 +612,11 @@ class TestMainModule:
         """python -m api_contract_guardian version prints version."""
         import subprocess
         import sys
+        # Reset the rate-limiter counter so the subprocess doesn't
+        # hit the free-tier paywall (the in-process mock doesn't
+        # carry over to a separate process).
+        from revenueholdings_license.rate_limiter import RateLimiter
+        RateLimiter().reset("api-contract-guardian")
         result = subprocess.run(
             [sys.executable, "-m", "api_contract_guardian", "version"],
             capture_output=True,
