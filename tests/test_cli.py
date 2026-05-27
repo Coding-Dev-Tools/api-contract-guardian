@@ -432,6 +432,25 @@ class TestCheckCommand:
             os.unlink(old_path)
             os.unlink(new_path)
 
+    def test_check_yaml_format(self):
+        """check --format yaml prints inline YAML to stdout after gate message."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--format", "yaml"])
+            assert result.exit_code == 0
+            assert "CI gate PASSED" in result.output
+            # Strip the gate status line to get clean YAML
+            lines = result.output.splitlines()
+            yaml_body = "\n".join(lines[1:])
+            payload = yaml.safe_load(yaml_body)
+            assert isinstance(payload, dict)
+            assert "gate" in payload
+            assert "diff" in payload
+            assert payload["gate"]["passed"] is True
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
     def test_check_yaml_output_file(self):
         """check --format yaml --output writes YAML to a file."""
         old_path, new_path = _identical_specs()
@@ -450,8 +469,6 @@ class TestCheckCommand:
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
-            if os.path.isfile(out_path):
-                os.unlink(out_path)
 
     def test_check_invalid_openapi_version(self):
         """check exits with code 1 when given a Swagger 2.0 (unsupported) spec."""
