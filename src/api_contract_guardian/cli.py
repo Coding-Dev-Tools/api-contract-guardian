@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import typer
 from pathlib import Path
 
@@ -14,7 +16,7 @@ except Exception:
     _has_rh = False
 
 
-def _require_license(tool_name: str):
+def _require_license(tool_name: str) -> None:
     """Lazily check revenueholdings license only when a command runs."""
     import os
     if os.environ.get("REVENUEHOLDINGS_LICENSE_BYPASS"):
@@ -45,7 +47,7 @@ app = typer.Typer(
 _console = None
 
 
-def _get_console():
+def _get_console() -> Any:
     global _console
     if _console is None:
         from rich.console import Console
