@@ -9,7 +9,6 @@ from pathlib import Path
 # Deferring heavy deps to command execution cuts cold start from ~440ms to ~180ms.
 
 try:
-    import importlib
     _has_rh = True
 except Exception:
     _has_rh = False
@@ -116,6 +115,7 @@ def diff(
     """Compare two OpenAPI specs and show all detected changes."""
     import json
     import yaml
+
     from .diff import diff_specs
     from .migration import generate_migration_guide
 
@@ -174,6 +174,7 @@ def check(
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
     import json
     import yaml
+
     from .diff import diff_specs
     from .gate import check_gate
 
@@ -236,6 +237,7 @@ def migrate(
     """Generate a migration guide between two OpenAPI spec versions."""
     import json
     import yaml
+
     from .diff import diff_specs
     from .migration import generate_migration_guide, generate_migration_guide_json
 
