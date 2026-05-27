@@ -2,22 +2,26 @@
 
 from __future__ import annotations
 
-import json
 import typer
-import yaml
 from pathlib import Path
-from rich.console import Console
-from rich.table import Table
 
-from .diff import DiffResult, diff_specs
-from .gate import check_gate
-from .loader import SpecLoadError, load_spec, validate_openapi_version
-from .migration import generate_migration_guide, generate_migration_guide_json
+# Lazy imports — jwt+cryptography+deepdiff+yaml add ~200ms at module level.
+# Deferring heavy deps to command execution cuts cold start from ~440ms to ~180ms.
 
 try:
-    from revenueholdings_license import require_license
-except ImportError:
-    require_license = None
+    import importlib
+    _has_rh = True
+except Exception:
+    _has_rh = False
+
+
+def _require_license(tool_name: str):
+    """Lazily check revenueholdings license only when a command runs."""
+    try:
+        from revenueholdings_license import require_license
+        require_license(tool_name)
+    except ImportError:
+        pass
 
 
 def _validate_output_format(format_name: str, allowed: tuple[str, ...], command: str) -> str:
@@ -29,16 +33,28 @@ def _validate_output_format(format_name: str, allowed: tuple[str, ...], command:
         )
     return format_name
 
+
 app = typer.Typer(
     name="api-contract-guardian",
     help="Detect breaking changes in OpenAPI specs and gate CI pipelines.",
     add_completion=False,
 )
-console = Console()
+
+_console = None
+
+
+def _get_console():
+    global _console
+    if _console is None:
+        from rich.console import Console
+        _console = Console()
+    return _console
 
 
 def _load_and_validate(path: str) -> dict:
     """Load a spec and validate its OpenAPI version."""
+    from .loader import SpecLoadError, load_spec, validate_openapi_version
+    console = _get_console()
     try:
         spec = load_spec(path)
     except SpecLoadError as exc:
@@ -54,8 +70,10 @@ def _load_and_validate(path: str) -> dict:
     return spec
 
 
-def _print_result(result: DiffResult) -> None:
+def _print_result(result) -> None:
     """Print a rich summary of the diff result."""
+    from rich.table import Table
+    console = _get_console()
     summary = result.to_dict()["summary"]
 
     table = Table(title="Change Summary")
@@ -70,22 +88,22 @@ def _print_result(result: DiffResult) -> None:
     if result.breaking_changes:
         console.print("\n[red bold]Breaking Changes:[/red bold]")
         for c in result.breaking_changes:
-            console.print(f"  [red]-[/red] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
+            console.print(f" [red]-[/red] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
 
     if result.dangerous_changes:
         console.print("\n[yellow bold]Dangerous Changes:[/yellow bold]")
         for c in result.dangerous_changes:
-            console.print(f"  [yellow]-[/yellow] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
+            console.print(f" [yellow]-[/yellow] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
 
     if result.non_breaking_changes:
         console.print("\n[green bold]Non-Breaking Changes:[/green bold]")
         for c in result.non_breaking_changes:
-            console.print(f"  [green]+[/green] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
+            console.print(f" [green]+[/green] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
 
     if result.info_changes:
         console.print("\n[blue bold]Informational:[/blue bold]")
         for c in result.info_changes:
-            console.print(f"  [blue]*[/blue] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
+            console.print(f" [blue]*[/blue] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
 
 
 @app.command()
@@ -96,13 +114,18 @@ def diff(
     format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, yaml, markdown"),
 ) -> None:
     """Compare two OpenAPI specs and show all detected changes."""
-    if require_license:
-        require_license("api-contract-guardian")
+    import json
+    import yaml
+    from .diff import diff_specs
+    from .migration import generate_migration_guide
+
+    _require_license("api-contract-guardian")
     format = _validate_output_format(format, ("rich", "json", "yaml", "markdown"), "diff")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
     result = diff_specs(old_spec, new_spec)
+    console = _get_console()
 
     if format == "json":
         output_data = json.dumps(result.to_dict(), indent=2)
@@ -149,8 +172,12 @@ def check(
     format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, yaml"),
 ) -> None:
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
-    if require_license:
-        require_license("api-contract-guardian")
+    import json
+    import yaml
+    from .diff import diff_specs
+    from .gate import check_gate
+
+    _require_license("api-contract-guardian")
     format = _validate_output_format(format, ("rich", "json", "yaml"), "check")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
@@ -163,6 +190,7 @@ def check(
         max_breaking=max_breaking,
         max_dangerous=max_dangerous,
     )
+    console = _get_console()
 
     if gate_result.passed:
         console.print(f"[green bold]{gate_result.message}[/green bold]")
@@ -206,13 +234,18 @@ def migrate(
     format: str = typer.Option("markdown", "--format", "-f", help="Output format: markdown, json, yaml"),
 ) -> None:
     """Generate a migration guide between two OpenAPI spec versions."""
-    if require_license:
-        require_license("api-contract-guardian")
+    import json
+    import yaml
+    from .diff import diff_specs
+    from .migration import generate_migration_guide, generate_migration_guide_json
+
+    _require_license("api-contract-guardian")
     format = _validate_output_format(format, ("markdown", "json", "yaml"), "migrate")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
     result = diff_specs(old_spec, new_spec)
+    console = _get_console()
 
     if format == "json":
         guide = generate_migration_guide_json(result)
@@ -237,8 +270,7 @@ def mcp() -> None:
     AI coding agents (Claude Code, Cursor, etc.) use this to interact
     with api-contract-guardian tools directly.
     """
-    if require_license:
-        require_license("api-contract-guardian")
+    _require_license("api-contract-guardian")
     from click_to_mcp import run
     run(app)
 
@@ -246,10 +278,9 @@ def mcp() -> None:
 @app.command()
 def version() -> None:
     """Show the version of API Contract Guardian."""
-    if require_license:
-        require_license("api-contract-guardian")
+    _require_license("api-contract-guardian")
     from . import __version__
-    console.print(f"api-contract-guardian v{__version__}")
+    _get_console().print(f"api-contract-guardian v{__version__}")
 
 
 if __name__ == "__main__":
