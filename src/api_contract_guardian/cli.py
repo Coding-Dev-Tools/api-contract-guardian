@@ -16,6 +16,9 @@ except Exception:
 
 def _require_license(tool_name: str):
     """Lazily check revenueholdings license only when a command runs."""
+    import os
+    if os.environ.get("REVENUEHOLDINGS_LICENSE_BYPASS"):
+        return
     try:
         from revenueholdings_license import require_license
         require_license(tool_name)

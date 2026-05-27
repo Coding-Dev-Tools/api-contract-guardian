@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 # Replace the module before any import resolves it
 _mock = MagicMock()
 _mock.require_license = MagicMock(return_value=None)
-sys.modules.setdefault("revenueholdings_license", _mock)
+sys.modules["revenueholdings_license"] = _mock
 
 # Also mock the rate_limiter submodule
 _rate_limiter_mock = MagicMock()
-sys.modules.setdefault("revenueholdings_license.rate_limiter", _rate_limiter_mock)
+sys.modules["revenueholdings_license.rate_limiter"] = _rate_limiter_mock
