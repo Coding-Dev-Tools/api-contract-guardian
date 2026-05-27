@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import typer
 from pathlib import Path
+from typing import Any
 
 # Lazy imports — jwt+cryptography+deepdiff+yaml add ~200ms at module level.
 # Deferring heavy deps to command execution cuts cold start from ~440ms to ~180ms.
