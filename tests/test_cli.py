@@ -618,11 +618,15 @@ class TestMainModule:
         # carry over to a separate process).
         from revenueholdings_license.rate_limiter import RateLimiter
         RateLimiter().reset("api-contract-guardian")
+        from revenueholdings_license import generate_license_key, Tier
+        env = os.environ.copy()
+        env["REVENUEHOLDINGS_LICENSE_KEY"] = generate_license_key(Tier.PRO)
         result = subprocess.run(
             [sys.executable, "-m", "api_contract_guardian", "version"],
             capture_output=True,
             text=True,
             cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            env=env,
         )
         assert result.returncode == 0
         assert "v0.1.0" in result.stdout
