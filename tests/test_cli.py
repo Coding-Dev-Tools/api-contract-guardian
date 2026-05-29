@@ -621,6 +621,8 @@ class TestMainModule:
         from revenueholdings_license import generate_license_key, Tier
         env = os.environ.copy()
         env["REVENUEHOLDINGS_LICENSE_KEY"] = generate_license_key(Tier.PRO)
+        # Ensure all environment variables are string keys and string values to prevent Popen TypeError on Windows
+        env = {str(k): str(v) for k, v in env.items() if v is not None}
         result = subprocess.run(
             [sys.executable, "-m", "api_contract_guardian", "version"],
             capture_output=True,
