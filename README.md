@@ -24,6 +24,12 @@ Real-world scenarios:
 ## Installation
 
 ```bash
+pip install api-contract-guardian
+```
+
+Or install the latest version directly from GitHub:
+
+```bash
 pip install git+https://github.com/Coding-Dev-Tools/api-contract-guardian.git
 ```
 
@@ -41,13 +47,13 @@ scoop bucket add Coding-Dev-Tools https://github.com/Coding-Dev-Tools/scoop-buck
 scoop install api-contract-guardian
 ```
 
-
 **npm (Node.js wrapper — publishing pending):**
+
 ```bash
 # Not yet available — install via pip instead
 ```
-Then run: `api-contract-guardian --help`
 
+Then run: `api-contract-guardian --help`
 ## Quick Start
 
 ```bash

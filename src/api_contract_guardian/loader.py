@@ -132,7 +132,7 @@ def get_schemas(spec: dict[str, Any]) -> dict[str, Any]:
 
 def get_operations(path_item: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Extract HTTP methods (operations) from a path item."""
-    methods = {}
+    methods: dict[str, dict[str, Any]] = {}
     for method in ("get", "post", "put", "patch", "delete", "head", "options", "trace"):
         if method in path_item:
             methods[method] = path_item[method]

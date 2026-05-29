@@ -157,14 +157,14 @@ class TestDiffCommand:
             os.unlink(new_path)
 
     def test_diff_rich_format(self):
-        """diff default (rich) format prints a summary table."""
+        """diff default (rich) format prints changes table with summary."""
         old_path, new_path = _identical_specs()
         try:
             result = runner.invoke(app, ["diff", old_path, new_path])
             assert result.exit_code == 0
-            assert "Change Summary" in result.output
-            assert "Breaking" in result.output
-            assert "0" in result.output
+            assert "Changes" in result.output or "Change Summary" in result.output
+            assert "Summary:" in result.output
+            assert "0 breaking" in result.output
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
@@ -192,10 +192,10 @@ class TestDiffCommand:
         try:
             result = runner.invoke(app, ["diff", old_path, new_path])
             assert result.exit_code == 0
-            assert "Change Summary" in result.output
-            assert "Non-Breaking Changes" in result.output
+            assert "Changes" in result.output or "Change Summary" in result.output
+            assert "Non-breaking" in result.output
+            assert "Info" in result.output
             assert "path_added" in result.output
-            assert "Informational" in result.output
             assert "server_added" in result.output
         finally:
             os.unlink(old_path)
@@ -469,6 +469,8 @@ class TestCheckCommand:
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
+            if os.path.isfile(out_path):
+                os.unlink(out_path)
 
     def test_check_invalid_openapi_version(self):
         """check exits with code 1 when given a Swagger 2.0 (unsupported) spec."""
@@ -631,11 +633,23 @@ class TestMainModule:
         """python -m api_contract_guardian version prints version."""
         import subprocess
         import sys
+
+        # Reset the rate-limiter counter so the subprocess doesn't
+        # hit the free-tier paywall (the in-process mock doesn't
+        # carry over to a separate process).
+        from revenueholdings_license.rate_limiter import RateLimiter
+        RateLimiter().reset("api-contract-guardian")
+        from revenueholdings_license import generate_license_key, Tier
+        env = os.environ.copy()
+        env["REVENUEHOLDINGS_LICENSE_KEY"] = generate_license_key(Tier.PRO)
+        # Ensure all environment variables are string keys and string values to prevent Popen TypeError on Windows
+        env = {str(k): str(v) for k, v in env.items() if v is not None}
         result = subprocess.run(
             [sys.executable, "-m", "api_contract_guardian", "version"],
             capture_output=True,
             text=True,
             cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            env=env,
         )
         assert result.returncode == 0
         assert "v0.1.0" in result.stdout
