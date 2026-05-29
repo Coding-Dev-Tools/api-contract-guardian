@@ -170,8 +170,8 @@ def check(
     fail_on_dangerous: bool = typer.Option(
         False, "--fail-on-dangerous/--allow-dangerous", help="Fail on dangerous changes",
     ),
-    max_breaking: int = typer.Option(-1, "--max-breaking", help="Max allowed breaking changes (-1=defer to flag, 0=none)"),
-    max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max allowed dangerous changes (-1=defer to flag, 0=none)"),
+    max_breaking: int = typer.Option(-1, "--max-breaking", help="Max breaking changes (-1=defer, 0=none)"),
+    max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max dangerous changes (-1=defer, 0=none)"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
     format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, yaml"),
 ) -> None:
