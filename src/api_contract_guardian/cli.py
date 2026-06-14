@@ -55,58 +55,56 @@ def _get_console() -> Any:
 
 
 def _load_and_validate(path: str) -> dict:
-    """Load a spec and validate its OpenAPI version."""
+    """Load a spec from file path and validate it's a supported OpenAPI version."""
     from .loader import SpecLoadError, load_spec, validate_openapi_version
-    console = _get_console()
+
     try:
         spec = load_spec(path)
-    except SpecLoadError as exc:
-        console.print(f"[red]Error loading {path}:[/red] {exc}")
-        raise typer.Exit(code=1) from exc
-
-    try:
         validate_openapi_version(spec)
-    except SpecLoadError as exc:
-        console.print(f"[red]Error validating {path}:[/red] {exc}")
-        raise typer.Exit(code=1) from exc
+        return spec
+    except SpecLoadError as e:
+        from rich.console import Console
+        Console().print(f"[red]Error loading: {e}[/red]")
+        raise typer.Exit(code=1)
 
-    return spec
 
-
-def _print_result(result) -> None:
-    """Print a rich summary of the diff result."""
+def _print_result(result: Any) -> None:
+    """Print a formatted diff result using Rich."""
     from rich.table import Table
+
     console = _get_console()
-    summary = result.to_dict()["summary"]
 
-    table = Table(title="Change Summary")
-    table.add_column("Severity", style="bold")
-    table.add_column("Count", justify="right")
-    table.add_row("[red]Breaking[/red]", str(summary["breaking"]))
-    table.add_row("[yellow]Dangerous[/yellow]", str(summary["dangerous"]))
-    table.add_row("[green]Non-breaking[/green]", str(summary["non_breaking"]))
-    table.add_row("[blue]Info[/blue]", str(summary["info"]))
+    breaking = result.breaking_changes
+    dangerous = result.dangerous_changes
+    non_breaking = result.non_breaking_changes
+    info = result.info_changes
+
+    if breaking:
+        table = Table(title="Breaking Changes", style="red")
+    elif dangerous:
+        table = Table(title="Dangerous Changes", style="yellow")
+    else:
+        table = Table(title="Changes", style="green")
+
+    table.add_column("Path")
+    table.add_column("Type")
+    table.add_column("Change")
+    table.add_column("Severity")
+
+    for change in breaking:
+        table.add_row(change.path, change.kind, change.description, "[red]Breaking[/red]")
+    for change in dangerous:
+        table.add_row(change.path, change.kind, change.description, "[yellow]Dangerous[/yellow]")
+    for change in non_breaking:
+        table.add_row(change.path, change.kind, change.description, "[green]Non-breaking[/green]")
+    for change in info:
+        table.add_row(change.path, change.kind, change.description, "[blue]Info[/blue]")
+
     console.print(table)
-
-    if result.breaking_changes:
-        console.print("\n[red bold]Breaking Changes:[/red bold]")
-        for c in result.breaking_changes:
-            console.print(f" [red]-[/red] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
-
-    if result.dangerous_changes:
-        console.print("\n[yellow bold]Dangerous Changes:[/yellow bold]")
-        for c in result.dangerous_changes:
-            console.print(f" [yellow]-[/yellow] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
-
-    if result.non_breaking_changes:
-        console.print("\n[green bold]Non-Breaking Changes:[/green bold]")
-        for c in result.non_breaking_changes:
-            console.print(f" [green]+[/green] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
-
-    if result.info_changes:
-        console.print("\n[blue bold]Informational:[/blue bold]")
-        for c in result.info_changes:
-            console.print(f" [blue]*[/blue] {c.kind} at [dim]{c.path}[/dim]: {c.description}")
+    console.print(f"\nSummary: [red]{len(breaking)} breaking[/red], "
+                  f"[yellow]{len(dangerous)} dangerous[/yellow], "
+                  f"[green]{len(non_breaking)} non-breaking[/green], "
+                  f"[blue]{len(info)} info[/blue]")
 
 
 @app.command()
@@ -285,9 +283,7 @@ def mcp() -> None:
 def version() -> None:
     """Show the version of API Contract Guardian."""
     _require_license("api-contract-guardian")
+
     from . import __version__
-    _get_console().print(f"api-contract-guardian v{__version__}")
-
-
-if __name__ == "__main__":
-    app()
+    console = _get_console()
+    console.print(f"api-contract-guardian v{__version__}")

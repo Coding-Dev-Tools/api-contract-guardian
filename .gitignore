@@ -72,3 +72,8 @@ Thumbs.db
 research/
 fixtures/generated/
 .ruff_cache/
+
+# Local opencode config
+AGENTS.md
+.agents/
+

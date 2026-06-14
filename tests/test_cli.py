@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import os
 import tempfile
+
 import yaml
-from api_contract_guardian.cli import app
 from typer.testing import CliRunner
+
+from api_contract_guardian.cli import app
 
 runner = CliRunner()
 
@@ -155,14 +157,14 @@ class TestDiffCommand:
             os.unlink(new_path)
 
     def test_diff_rich_format(self):
-        """diff default (rich) format prints a summary table."""
+        """diff default (rich) format prints changes table with summary."""
         old_path, new_path = _identical_specs()
         try:
             result = runner.invoke(app, ["diff", old_path, new_path])
             assert result.exit_code == 0
-            assert "Change Summary" in result.output
-            assert "Breaking" in result.output
-            assert "0" in result.output
+            assert "Changes" in result.output or "Change Summary" in result.output
+            assert "Summary:" in result.output
+            assert "0 breaking" in result.output
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
@@ -190,10 +192,10 @@ class TestDiffCommand:
         try:
             result = runner.invoke(app, ["diff", old_path, new_path])
             assert result.exit_code == 0
-            assert "Change Summary" in result.output
-            assert "Non-Breaking Changes" in result.output
+            assert "Changes" in result.output or "Change Summary" in result.output
+            assert "Non-breaking" in result.output
+            assert "Info" in result.output
             assert "path_added" in result.output
-            assert "Informational" in result.output
             assert "server_added" in result.output
         finally:
             os.unlink(old_path)
@@ -426,6 +428,25 @@ class TestCheckCommand:
             result = runner.invoke(app, ["check", old_path, new_path, "--format", "csv"])
             assert result.exit_code != 0
             assert "Unsupported check format" in result.output
+        finally:
+            os.unlink(old_path)
+            os.unlink(new_path)
+
+    def test_check_yaml_format(self):
+        """check --format yaml prints inline YAML to stdout after gate message."""
+        old_path, new_path = _identical_specs()
+        try:
+            result = runner.invoke(app, ["check", old_path, new_path, "--format", "yaml"])
+            assert result.exit_code == 0
+            assert "CI gate PASSED" in result.output
+            # Strip the gate status line to get clean YAML
+            lines = result.output.splitlines()
+            yaml_body = "\n".join(lines[1:])
+            payload = yaml.safe_load(yaml_body)
+            assert isinstance(payload, dict)
+            assert "gate" in payload
+            assert "diff" in payload
+            assert payload["gate"]["passed"] is True
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
