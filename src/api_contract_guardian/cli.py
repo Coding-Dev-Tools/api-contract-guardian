@@ -10,9 +10,14 @@ from typing import Any
 # Deferring heavy deps to command execution cuts cold start from ~440ms to ~180ms.
 
 try:
+    from revenueholdings_license import require_license
     _has_rh = True
-except Exception:
+except ImportError:
+    import warnings
+    warnings.warn("revenueholdings-license not installed; license checks skipped", stacklevel=2)
     _has_rh = False
+    def require_license(product: str) -> None:  # type: ignore[misc]
+        pass
 
 
 def _require_license(tool_name: str) -> None:

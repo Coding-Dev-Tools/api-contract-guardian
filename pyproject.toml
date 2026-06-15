@@ -42,6 +42,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "ruff>=0.4.0",
 ]
+license = ["revenueholdings-license>=0.1.0"]
 
 [project.scripts]
 api-contract-guardian = "api_contract_guardian.cli:app"
