@@ -9,11 +9,6 @@ from typing import Any
 # Lazy imports — jwt+cryptography+deepdiff+yaml add ~200ms at module level.
 # Deferring heavy deps to command execution cuts cold start from ~440ms to ~180ms.
 
-try:
-    _has_rh = True
-except Exception:
-    _has_rh = False
-
 
 def _require_license(tool_name: str) -> None:
     """Lazily check revenueholdings license only when a command runs."""

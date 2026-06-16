@@ -37,6 +37,12 @@ Issues = "https://github.com/Coding-Dev-Tools/api-contract-guardian/issues"
 Changelog = "https://github.com/Coding-Dev-Tools/api-contract-guardian/releases"
 
 [project.optional-dependencies]
+# Optional paywall gating (Model-B license). The tool runs without it
+# (require_license no-ops on ImportError); install to enable Free/Pro
+# tiers:  pip install api-contract-guardian[license]
+license = [
+    "revenueholdings_license @ git+https://github.com/Coding-Dev-Tools/revenueholdings_license.git",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
