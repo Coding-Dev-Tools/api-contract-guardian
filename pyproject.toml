@@ -50,6 +50,12 @@ api-contract-guardian = "api_contract_guardian.cli:app"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+api_contract_guardian = ["py.typed"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
@@ -63,4 +69,4 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["*"]
+known-first-party = ["api_contract_guardian"]

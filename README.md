@@ -3,17 +3,18 @@
 [![GitHub stars](https://img.shields.io/github/stars/Coding-Dev-Tools/api-contract-guardian?style=social)](https://github.com/Coding-Dev-Tools/api-contract-guardian/stargazers)
 
 Monitor OpenAPI schema diffs between git branches, detect breaking changes, generate migration guides, and block CI pipelines on contract violations.
-[![CI](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions)
+|[![CI](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/actions)
 
 > ⭐ **Star this repo** if you maintain APIs — it helps other devs discover API Contract Guardian!
 
-[![GitHub release](https://img.shields.io/github/v/release/Coding-Dev-Tools/api-contract-guardian?label=latest)](https://github.com/Coding-Dev-Tools/api-contract-guardian/releases)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/blob/main/LICENSE)
-[![Open Source Alternative](https://img.shields.io/badge/Open_Source_Alternative-%E2%87%92-blue?logo=opensourceinitiative)](https://www.opensourcealternative.to/project/api-contract-guardian)
-[![PyPI](https://img.shields.io/pypi/v/api-contract-guardian)](https://pypi.org/project/api-contract-guardian/)
+|[![GitHub release](https://img.shields.io/github/v/release/Coding-Dev-Tools/api-contract-guardian?label=latest)](https://github.com/Coding-Dev-Tools/api-contract-guardian/releases)
+|![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+|[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/blob/main/LICENSE)
+|[![Open Source Alternative](https://img.shields.io/badge/Open_Source_Alternative-%E2%87%92-blue?logo=opensourceinitiative)](https://www.opensourcealternative.to/project/api-contract-guardian)
+|[![LibHunt](https://img.shields.io/badge/LibHunt-%E2%87%92-blue?logo=codeigniter)](https://www.libhunt.com/r/Coding-Dev-Tools/api-contract-guardian)
+|[![PyPI](https://img.shields.io/pypi/v/api-contract-guardian)](https://pypi.org/project/api-contract-guardian/)
 
-**Why API Contract Guardian?
+**Why API Contract Guardian?**
 
 Real-world scenarios:
 - **CI/CD gating**: Block PRs that introduce breaking API changes — catch them before merge, not after deploy
@@ -134,7 +135,7 @@ API Contract Guardian is one of eleven tools in the Revenue Holdings suite. One 
 | Priority support | Community | 24h | 24h | 8h | Dedicated |
 
 <p align="center">
-  <sub>Part of <a href="https://coding-dev-tools.github.io/revenueholdings.dev/">Revenue Holdings</a> — CLI tools built by autonomous AI.</sub>
+  <sub>Part of <a href="https://coding-dev-tools.github.io/devforge/">Revenue Holdings</a> — CLI tools built by autonomous AI.</sub>
 </p>
 
 ## License

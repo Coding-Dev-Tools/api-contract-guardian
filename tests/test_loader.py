@@ -1,8 +1,10 @@
 """Tests for the loader module."""
 
 import json
+
 import pytest
 import yaml
+
 from api_contract_guardian.loader import (
     SpecLoadError,
     get_operations,
@@ -92,6 +94,13 @@ class TestLoadSpec:
         with pytest.raises(SpecLoadError, match="not a valid OpenAPI document"):
             load_spec(p)
 
+    def test_load_unreadable_file_raises(self, tmp_path):
+        """Loading an unreadable target (e.g. a directory) raises SpecLoadError."""
+        d = tmp_path / "somedir"
+        d.mkdir()
+        with pytest.raises(SpecLoadError, match="Cannot read"):
+            load_spec(d)
+
     def test_load_string_path(self, yaml_spec_file):
         spec = load_spec(str(yaml_spec_file))
         assert spec["openapi"] == "3.0.3"
@@ -136,6 +145,12 @@ class TestLoadSpecFromString:
     def test_load_non_dict_string_raises(self):
         with pytest.raises(SpecLoadError, match="not a valid OpenAPI document"):
             load_spec_from_string('["list", "not", "dict"]', fmt="json")
+
+    def test_load_non_dict_yaml_string_raises(self):
+        """YAML parse of non-dict content raises SpecLoadError (covers YAML branch)."""
+        content = "- item1\n- item2"
+        with pytest.raises(SpecLoadError, match="not a valid OpenAPI document"):
+            load_spec_from_string(content, fmt="yaml")
 
 
 # ── validate_openapi_version tests ──
