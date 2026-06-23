@@ -74,6 +74,5 @@ fixtures/generated/
 .ruff_cache/
 
 # Local opencode config
-AGENTS.md
 .agents/
 
