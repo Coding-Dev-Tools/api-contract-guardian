@@ -639,7 +639,7 @@ class TestMainModule:
         # carry over to a separate process).
         from revenueholdings_license.rate_limiter import RateLimiter
         RateLimiter().reset("api-contract-guardian")
-        from revenueholdings_license import generate_license_key, Tier
+        from revenueholdings_license import Tier, generate_license_key
         env = os.environ.copy()
         env["REVENUEHOLDINGS_LICENSE_KEY"] = generate_license_key(Tier.PRO)
         # Ensure all environment variables are string keys and string values to prevent Popen TypeError on Windows
