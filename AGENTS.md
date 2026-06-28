@@ -59,4 +59,4 @@ This repo is visited by the dev-engineer cron job on a 32-repo rotation. The age
 1. Check for CI failures (ruff, tests)
 2. Fix linting issues (max 50 lines changed)
 3. Create PR with improvements
-4. Advance rotation pointer
+4. Advance rotation pointer# Trigger CI
