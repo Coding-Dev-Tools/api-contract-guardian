@@ -1,6 +1,5 @@
 """Tests for the migration module."""
 
-import pytest
 
 from api_contract_guardian.diff import Change, DiffResult, Severity
 from api_contract_guardian.migration import generate_migration_guide, generate_migration_guide_json

@@ -1,12 +1,8 @@
 """Tests for the loader module."""
 
 import json
-import tempfile
-from pathlib import Path
-
 import pytest
 import yaml
-
 from api_contract_guardian.loader import (
     SpecLoadError,
     get_operations,
@@ -16,7 +12,6 @@ from api_contract_guardian.loader import (
     load_spec_from_string,
     validate_openapi_version,
 )
-
 
 # ── Fixtures ──
 

@@ -1,6 +1,5 @@
 """Tests for the diff engine."""
 
-import pytest
 
 from api_contract_guardian.diff import (
     Change,
@@ -8,7 +7,6 @@ from api_contract_guardian.diff import (
     Severity,
     diff_specs,
 )
-
 
 # ── Minimal spec fixtures ──
 
