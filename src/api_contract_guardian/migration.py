@@ -47,7 +47,9 @@ def generate_migration_guide(result: DiffResult) -> str:
         lines.append("These changes **will** break existing clients. Action required.")
         lines.append("")
         for change in breaking:
-            lines.append(f"- **{change.kind}** at `{change.path}`: {change.description}")
+            lines.append(
+                f"- **{change.kind}** at `{change.path}`: {change.description}"
+            )
             if change.old_value is not None or change.new_value is not None:
                 lines.append(_format_value_change(change))
         lines.append("")
@@ -57,10 +59,14 @@ def generate_migration_guide(result: DiffResult) -> str:
     if dangerous:
         lines.append("## Dangerous Changes")
         lines.append("")
-        lines.append("These changes **may** break existing clients. Review recommended.")
+        lines.append(
+            "These changes **may** break existing clients. Review recommended."
+        )
         lines.append("")
         for change in dangerous:
-            lines.append(f"- **{change.kind}** at `{change.path}`: {change.description}")
+            lines.append(
+                f"- **{change.kind}** at `{change.path}`: {change.description}"
+            )
         lines.append("")
 
     # Non-breaking changes section
@@ -71,7 +77,9 @@ def generate_migration_guide(result: DiffResult) -> str:
         lines.append("These changes are backward-compatible. No action required.")
         lines.append("")
         for change in non_breaking:
-            lines.append(f"- **{change.kind}** at `{change.path}`: {change.description}")
+            lines.append(
+                f"- **{change.kind}** at `{change.path}`: {change.description}"
+            )
         lines.append("")
 
     # Info section
@@ -80,7 +88,9 @@ def generate_migration_guide(result: DiffResult) -> str:
         lines.append("## Informational")
         lines.append("")
         for change in info:
-            lines.append(f"- **{change.kind}** at `{change.path}`: {change.description}")
+            lines.append(
+                f"- **{change.kind}** at `{change.path}`: {change.description}"
+            )
         lines.append("")
 
     # Migration steps
@@ -119,20 +129,25 @@ def _generate_steps(breaking_changes: list[Change]) -> list[str]:
         ops = ", ".join(f"`{c.path}`" for c in removed_ops)
         steps.append(f"Update client code to stop calling removed operations: {ops}")
 
-    newly_required = [c for c in breaking_changes if c.kind == "parameter_became_required"]
+    newly_required = [
+        c for c in breaking_changes if c.kind == "parameter_became_required"
+    ]
     if newly_required:
         params = ", ".join(f"`{c.path}`" for c in newly_required)
         steps.append(f"Add required parameters to requests: {params}")
 
     required_params_added = [
-        c for c in breaking_changes
+        c
+        for c in breaking_changes
         if c.kind == "parameter_added" and "(required)" in c.description
     ]
     if required_params_added:
         params = ", ".join(f"`{c.path}`" for c in required_params_added)
         steps.append(f"Add newly required parameters: {params}")
 
-    required_rb = [c for c in breaking_changes if c.kind == "request_body_became_required"]
+    required_rb = [
+        c for c in breaking_changes if c.kind == "request_body_became_required"
+    ]
     if required_rb:
         steps.append("Update requests to include required request bodies")
 
@@ -142,8 +157,10 @@ def _generate_steps(breaking_changes: list[Change]) -> list[str]:
         steps.append(f"Replace removed schemas: {schemas}")
 
     type_changes = [
-        c for c in breaking_changes
-        if c.kind in ("schema_type_changed", "property_type_changed", "parameter_type_changed")
+        c
+        for c in breaking_changes
+        if c.kind
+        in ("schema_type_changed", "property_type_changed", "parameter_type_changed")
     ]
     if type_changes:
         steps.append("Update type handling code for changed types")
@@ -157,19 +174,23 @@ def _generate_steps(breaking_changes: list[Change]) -> list[str]:
         steps.append("Update enum value references to remove deleted values")
 
     removed_content_types = [
-        c for c in breaking_changes
+        c
+        for c in breaking_changes
         if c.kind in ("request_content_type_removed", "response_content_type_removed")
     ]
     if removed_content_types:
         steps.append("Update content-type handling for removed content types")
 
     op_id_changes = [
-        c for c in breaking_changes
+        c
+        for c in breaking_changes
         if c.kind in ("operation_id_removed", "operation_id_changed")
     ]
     if op_id_changes:
         ops = ", ".join(f"`{c.path}`" for c in op_id_changes)
-        steps.append(f"Update SDK codegen references for changed/removed operationIds: {ops}")
+        steps.append(
+            f"Update SDK codegen references for changed/removed operationIds: {ops}"
+        )
 
     if not steps:
         steps.append("Review breaking changes and update client code accordingly")
@@ -192,6 +213,8 @@ def generate_migration_guide_json(result: DiffResult) -> dict[str, Any]:
         "summary": result.to_dict()["summary"],
         "breaking_changes": [c.to_dict() for c in result.breaking_changes],
         "dangerous_changes": [c.to_dict() for c in result.dangerous_changes],
-        "migration_steps": _generate_steps(result.breaking_changes) if result.breaking_changes else [],
+        "migration_steps": _generate_steps(result.breaking_changes)
+        if result.breaking_changes
+        else [],
     }
     return guide
