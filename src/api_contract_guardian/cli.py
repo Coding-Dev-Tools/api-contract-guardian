@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -26,10 +27,11 @@ except ImportError:
         pass
 
 
+_require_license_strict: bool = False
+
+
 def _require_license(tool_name: str) -> None:
     """Lazily check revenueholdings license only when a command runs."""
-    import os
-
     if os.environ.get("REVENUEHOLDINGS_LICENSE_BYPASS"):
         return
     try:
@@ -37,7 +39,16 @@ def _require_license(tool_name: str) -> None:
 
         require_license(tool_name)
     except ImportError:
-        pass
+        if _require_license_strict:
+            _get_console().print(
+                "[bold red]Error:[/bold red] revenueholdings-license is not installed. "
+                "Install it with: pip install revenueholdings-license",
+                err=True,
+            )
+            raise typer.Exit(code=1) from None
+    except Exception:
+        if _require_license_strict:
+            raise
 
 
 def _validate_output_format(
@@ -68,6 +79,25 @@ def _get_console() -> Any:
 
         _console = Console()
     return _console
+
+
+@app.callback()
+def _app_callback(
+    require_license_flag: bool = typer.Option(
+        False,
+        "--require-license",
+        help=(
+            "Exit with an error if revenueholdings-license is not installed "
+            "or if the license check fails. "
+            "Also enabled via REVENUEHOLDINGS_REQUIRE_LICENSE=1."
+        ),
+    ),
+) -> None:
+    """Detect breaking changes in OpenAPI specs and gate CI pipelines."""
+    global _require_license_strict
+    _require_license_strict = require_license_flag or bool(
+        os.environ.get("REVENUEHOLDINGS_REQUIRE_LICENSE")
+    )
 
 
 def _load_and_validate(path: str) -> dict:
