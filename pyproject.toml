@@ -22,11 +22,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "typer>=0.9.0",
-    "rich>=13.0.0",
+    "typer>=0.26.0",
+    "rich>=15.0.0",
     "pyyaml>=6.0",
     "jsonschema>=4.17.0",
-    "deepdiff>=6.0.0",
+    "deepdiff>=9.0.0",
 ]
 
 [project.urls]
@@ -38,20 +38,20 @@ Changelog = "https://github.com/Coding-Dev-Tools/api-contract-guardian/releases"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "ruff>=0.4.0",
+    "pytest>=9.0.0",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.15.0",
 ]
 license = ["revenueholdings-license>=0.1.0"]
 
 [project.scripts]
 api-contract-guardian = "api_contract_guardian.cli:app"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
 [tool.setuptools]
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
 api_contract_guardian = ["py.typed"]
