@@ -124,26 +124,30 @@ def _diff_paths(old: dict[str, Any], new: dict[str, Any], result: DiffResult) ->
     # Removed paths — BREAKING
     for path in old_paths:
         if path not in new_paths:
-            result.changes.append(Change(
-                kind="path_removed",
-                severity=Severity.BREAKING,
-                path=f"paths.{path}",
-                description=f"Path '{path}' was removed",
-                old_value=path,
-                new_value=None,
-            ))
+            result.changes.append(
+                Change(
+                    kind="path_removed",
+                    severity=Severity.BREAKING,
+                    path=f"paths.{path}",
+                    description=f"Path '{path}' was removed",
+                    old_value=path,
+                    new_value=None,
+                )
+            )
 
     # Added paths — NON_BREAKING
     for path in new_paths:
         if path not in old_paths:
-            result.changes.append(Change(
-                kind="path_added",
-                severity=Severity.NON_BREAKING,
-                path=f"paths.{path}",
-                description=f"Path '{path}' was added",
-                old_value=None,
-                new_value=path,
-            ))
+            result.changes.append(
+                Change(
+                    kind="path_added",
+                    severity=Severity.NON_BREAKING,
+                    path=f"paths.{path}",
+                    description=f"Path '{path}' was added",
+                    old_value=None,
+                    new_value=path,
+                )
+            )
 
     # Check operations within shared paths
     for path in old_paths:
@@ -166,23 +170,27 @@ def _diff_operations(
         new_op = new_item.get(method)
 
         if old_op and not new_op:
-            result.changes.append(Change(
-                kind="operation_removed",
-                severity=Severity.BREAKING,
-                path=f"paths.{path}.{method}",
-                description=f"{method.upper()} {path} was removed",
-                old_value=method,
-                new_value=None,
-            ))
+            result.changes.append(
+                Change(
+                    kind="operation_removed",
+                    severity=Severity.BREAKING,
+                    path=f"paths.{path}.{method}",
+                    description=f"{method.upper()} {path} was removed",
+                    old_value=method,
+                    new_value=None,
+                )
+            )
         elif not old_op and new_op:
-            result.changes.append(Change(
-                kind="operation_added",
-                severity=Severity.NON_BREAKING,
-                path=f"paths.{path}.{method}",
-                description=f"{method.upper()} {path} was added",
-                old_value=None,
-                new_value=method,
-            ))
+            result.changes.append(
+                Change(
+                    kind="operation_added",
+                    severity=Severity.NON_BREAKING,
+                    path=f"paths.{path}.{method}",
+                    description=f"{method.upper()} {path} was added",
+                    old_value=None,
+                    new_value=method,
+                )
+            )
         elif old_op and new_op:
             _diff_operation_details(path, method, old_op, new_op, result)
 
@@ -198,53 +206,67 @@ def _diff_operation_details(
     op_path = f"paths.{path}.{method}"
 
     # Check parameters
-    _diff_parameters(op_path, old_op.get("parameters", []), new_op.get("parameters", []), result)
+    _diff_parameters(
+        op_path, old_op.get("parameters", []), new_op.get("parameters", []), result
+    )
 
     # Check request body
-    _diff_request_body(op_path, old_op.get("requestBody"), new_op.get("requestBody"), result)
+    _diff_request_body(
+        op_path, old_op.get("requestBody"), new_op.get("requestBody"), result
+    )
 
     # Check responses
-    _diff_responses(op_path, old_op.get("responses", {}), new_op.get("responses", {}), result)
+    _diff_responses(
+        op_path, old_op.get("responses", {}), new_op.get("responses", {}), result
+    )
 
     # Check if operation became deprecated
     if not old_op.get("deprecated") and new_op.get("deprecated"):
-        result.changes.append(Change(
-            kind="operation_deprecated",
-            severity=Severity.DANGEROUS,
-            path=op_path,
-            description=f"{method.upper()} {path} is now deprecated",
-        ))
+        result.changes.append(
+            Change(
+                kind="operation_deprecated",
+                severity=Severity.DANGEROUS,
+                path=op_path,
+                description=f"{method.upper()} {path} is now deprecated",
+            )
+        )
 
     # Check operationId changes
     old_op_id = old_op.get("operationId")
     new_op_id = new_op.get("operationId")
     if old_op_id and not new_op_id:
-        result.changes.append(Change(
-            kind="operation_id_removed",
-            severity=Severity.BREAKING,
-            path=op_path,
-            description=f"{method.upper()} {path} operationId '{old_op_id}' was removed",
-            old_value=old_op_id,
-            new_value=None,
-        ))
+        result.changes.append(
+            Change(
+                kind="operation_id_removed",
+                severity=Severity.BREAKING,
+                path=op_path,
+                description=f"{method.upper()} {path} operationId '{old_op_id}' was removed",
+                old_value=old_op_id,
+                new_value=None,
+            )
+        )
     elif not old_op_id and new_op_id:
-        result.changes.append(Change(
-            kind="operation_id_added",
-            severity=Severity.NON_BREAKING,
-            path=op_path,
-            description=f"{method.upper()} {path} operationId '{new_op_id}' was added",
-            old_value=None,
-            new_value=new_op_id,
-        ))
+        result.changes.append(
+            Change(
+                kind="operation_id_added",
+                severity=Severity.NON_BREAKING,
+                path=op_path,
+                description=f"{method.upper()} {path} operationId '{new_op_id}' was added",
+                old_value=None,
+                new_value=new_op_id,
+            )
+        )
     elif old_op_id and new_op_id and old_op_id != new_op_id:
-        result.changes.append(Change(
-            kind="operation_id_changed",
-            severity=Severity.BREAKING,
-            path=op_path,
-            description=f"{method.upper()} {path} operationId changed from '{old_op_id}' to '{new_op_id}'",
-            old_value=old_op_id,
-            new_value=new_op_id,
-        ))
+        result.changes.append(
+            Change(
+                kind="operation_id_changed",
+                severity=Severity.BREAKING,
+                path=op_path,
+                description=f"{method.upper()} {path} operationId changed from '{old_op_id}' to '{new_op_id}'",
+                old_value=old_op_id,
+                new_value=new_op_id,
+            )
+        )
 
     # Check if operation became required (new required param)
     # Handled in _diff_parameters
@@ -270,30 +292,40 @@ def _diff_parameters(
     # Removed parameters
     for key, param in old_by_key.items():
         if key not in new_by_key:
-            result.changes.append(Change(
-                kind="parameter_removed",
-                severity=Severity.BREAKING if param.get("required", False) else Severity.NON_BREAKING,
-                path=f"{op_path}.parameters.{key[0]}.{key[1]}",
-                description=f"Parameter '{key[1]}' ({key[0]}) was removed",
-                old_value=param,
-                new_value=None,
-            ))
+            result.changes.append(
+                Change(
+                    kind="parameter_removed",
+                    severity=Severity.BREAKING
+                    if param.get("required", False)
+                    else Severity.NON_BREAKING,
+                    path=f"{op_path}.parameters.{key[0]}.{key[1]}",
+                    description=f"Parameter '{key[1]}' ({key[0]}) was removed",
+                    old_value=param,
+                    new_value=None,
+                )
+            )
 
     # Added parameters
     for key, param in new_by_key.items():
         if key not in old_by_key:
-            sev = Severity.BREAKING if param.get("required", False) else Severity.NON_BREAKING
-            result.changes.append(Change(
-                kind="parameter_added",
-                severity=sev,
-                path=f"{op_path}.parameters.{key[0]}.{key[1]}",
-                description=(
-        f"Parameter '{key[1]}' ({key[0]}) was added"
-        + (" (required)" if param.get("required") else "")
-    ),
-                old_value=None,
-                new_value=param,
-            ))
+            sev = (
+                Severity.BREAKING
+                if param.get("required", False)
+                else Severity.NON_BREAKING
+            )
+            result.changes.append(
+                Change(
+                    kind="parameter_added",
+                    severity=sev,
+                    path=f"{op_path}.parameters.{key[0]}.{key[1]}",
+                    description=(
+                        f"Parameter '{key[1]}' ({key[0]}) was added"
+                        + (" (required)" if param.get("required") else "")
+                    ),
+                    old_value=None,
+                    new_value=param,
+                )
+            )
 
     # Changed parameters
     for key in old_by_key:
@@ -304,26 +336,30 @@ def _diff_parameters(
 
         # Required flag changed
         if not old_p.get("required", False) and new_p.get("required", False):
-            result.changes.append(Change(
-                kind="parameter_became_required",
-                severity=Severity.BREAKING,
-                path=f"{op_path}.parameters.{key[0]}.{key[1]}",
-                description=f"Parameter '{key[1]}' ({key[0]}) became required",
-            ))
+            result.changes.append(
+                Change(
+                    kind="parameter_became_required",
+                    severity=Severity.BREAKING,
+                    path=f"{op_path}.parameters.{key[0]}.{key[1]}",
+                    description=f"Parameter '{key[1]}' ({key[0]}) became required",
+                )
+            )
 
         # Type changed
         if old_p.get("schema", {}).get("type") != new_p.get("schema", {}).get("type"):
             old_type = old_p.get("schema", {}).get("type")
             new_type = new_p.get("schema", {}).get("type")
             if old_type and new_type:
-                result.changes.append(Change(
-                    kind="parameter_type_changed",
-                    severity=Severity.BREAKING,
-                    path=f"{op_path}.parameters.{key[0]}.{key[1]}",
-                    description=f"Parameter '{key[1]}' type changed from '{old_type}' to '{new_type}'",
-                    old_value=old_type,
-                    new_value=new_type,
-                ))
+                result.changes.append(
+                    Change(
+                        kind="parameter_type_changed",
+                        severity=Severity.BREAKING,
+                        path=f"{op_path}.parameters.{key[0]}.{key[1]}",
+                        description=f"Parameter '{key[1]}' type changed from '{old_type}' to '{new_type}'",
+                        old_value=old_type,
+                        new_value=new_type,
+                    )
+                )
 
 
 def _diff_request_body(
@@ -336,21 +372,25 @@ def _diff_request_body(
     rb_path = f"{op_path}.requestBody"
 
     if old_rb and not new_rb:
-        result.changes.append(Change(
-            kind="request_body_removed",
-            severity=Severity.BREAKING,
-            path=rb_path,
-            description="Request body was removed",
-        ))
+        result.changes.append(
+            Change(
+                kind="request_body_removed",
+                severity=Severity.BREAKING,
+                path=rb_path,
+                description="Request body was removed",
+            )
+        )
         return
 
     if not old_rb and new_rb:
-        result.changes.append(Change(
-            kind="request_body_added",
-            severity=Severity.NON_BREAKING,
-            path=rb_path,
-            description="Request body was added",
-        ))
+        result.changes.append(
+            Change(
+                kind="request_body_added",
+                severity=Severity.NON_BREAKING,
+                path=rb_path,
+                description="Request body was added",
+            )
+        )
         return
 
     if not old_rb or not new_rb:
@@ -358,12 +398,14 @@ def _diff_request_body(
 
     # Required flag changed
     if not old_rb.get("required", False) and new_rb.get("required", False):
-        result.changes.append(Change(
-            kind="request_body_became_required",
-            severity=Severity.BREAKING,
-            path=rb_path,
-            description="Request body became required",
-        ))
+        result.changes.append(
+            Change(
+                kind="request_body_became_required",
+                severity=Severity.BREAKING,
+                path=rb_path,
+                description="Request body became required",
+            )
+        )
 
     # Content type changes
     old_content = old_rb.get("content", {})
@@ -371,21 +413,25 @@ def _diff_request_body(
 
     for ct in old_content:
         if ct not in new_content:
-            result.changes.append(Change(
-                kind="request_content_type_removed",
-                severity=Severity.BREAKING,
-                path=f"{rb_path}.content.{ct}",
-                description=f"Request content type '{ct}' was removed",
-            ))
+            result.changes.append(
+                Change(
+                    kind="request_content_type_removed",
+                    severity=Severity.BREAKING,
+                    path=f"{rb_path}.content.{ct}",
+                    description=f"Request content type '{ct}' was removed",
+                )
+            )
 
     for ct in new_content:
         if ct not in old_content:
-            result.changes.append(Change(
-                kind="request_content_type_added",
-                severity=Severity.NON_BREAKING,
-                path=f"{rb_path}.content.{ct}",
-                description=f"Request content type '{ct}' was added",
-            ))
+            result.changes.append(
+                Change(
+                    kind="request_content_type_added",
+                    severity=Severity.NON_BREAKING,
+                    path=f"{rb_path}.content.{ct}",
+                    description=f"Request content type '{ct}' was added",
+                )
+            )
 
 
 def _diff_responses(
@@ -399,21 +445,25 @@ def _diff_responses(
 
     for code in old_resp:
         if code not in new_resp:
-            result.changes.append(Change(
-                kind="response_removed",
-                severity=Severity.BREAKING,
-                path=f"{resp_path}.{code}",
-                description=f"Response '{code}' was removed",
-            ))
+            result.changes.append(
+                Change(
+                    kind="response_removed",
+                    severity=Severity.BREAKING,
+                    path=f"{resp_path}.{code}",
+                    description=f"Response '{code}' was removed",
+                )
+            )
 
     for code in new_resp:
         if code not in old_resp:
-            result.changes.append(Change(
-                kind="response_added",
-                severity=Severity.NON_BREAKING,
-                path=f"{resp_path}.{code}",
-                description=f"Response '{code}' was added",
-            ))
+            result.changes.append(
+                Change(
+                    kind="response_added",
+                    severity=Severity.NON_BREAKING,
+                    path=f"{resp_path}.{code}",
+                    description=f"Response '{code}' was added",
+                )
+            )
 
     for code in old_resp:
         if code not in new_resp:
@@ -423,21 +473,25 @@ def _diff_responses(
 
         for ct in old_content:
             if ct not in new_content:
-                result.changes.append(Change(
-                    kind="response_content_type_removed",
-                    severity=Severity.BREAKING,
-                    path=f"{resp_path}.{code}.content.{ct}",
-                    description=f"Response content type '{ct}' for '{code}' was removed",
-                ))
+                result.changes.append(
+                    Change(
+                        kind="response_content_type_removed",
+                        severity=Severity.BREAKING,
+                        path=f"{resp_path}.{code}.content.{ct}",
+                        description=f"Response content type '{ct}' for '{code}' was removed",
+                    )
+                )
 
         for ct in new_content:
             if ct not in old_content:
-                result.changes.append(Change(
-                    kind="response_content_type_added",
-                    severity=Severity.NON_BREAKING,
-                    path=f"{resp_path}.{code}.content.{ct}",
-                    description=f"Response content type '{ct}' for '{code}' was added",
-                ))
+                result.changes.append(
+                    Change(
+                        kind="response_content_type_added",
+                        severity=Severity.NON_BREAKING,
+                        path=f"{resp_path}.{code}.content.{ct}",
+                        description=f"Response content type '{ct}' for '{code}' was added",
+                    )
+                )
 
 
 def _diff_schemas(old: dict[str, Any], new: dict[str, Any], result: DiffResult) -> None:
@@ -447,21 +501,25 @@ def _diff_schemas(old: dict[str, Any], new: dict[str, Any], result: DiffResult) 
 
     for name in old_schemas:
         if name not in new_schemas:
-            result.changes.append(Change(
-                kind="schema_removed",
-                severity=Severity.BREAKING,
-                path=f"components.schemas.{name}",
-                description=f"Schema '{name}' was removed",
-            ))
+            result.changes.append(
+                Change(
+                    kind="schema_removed",
+                    severity=Severity.BREAKING,
+                    path=f"components.schemas.{name}",
+                    description=f"Schema '{name}' was removed",
+                )
+            )
 
     for name in new_schemas:
         if name not in old_schemas:
-            result.changes.append(Change(
-                kind="schema_added",
-                severity=Severity.NON_BREAKING,
-                path=f"components.schemas.{name}",
-                description=f"Schema '{name}' was added",
-            ))
+            result.changes.append(
+                Change(
+                    kind="schema_added",
+                    severity=Severity.NON_BREAKING,
+                    path=f"components.schemas.{name}",
+                    description=f"Schema '{name}' was added",
+                )
+            )
 
     for name in old_schemas:
         if name not in new_schemas:
@@ -482,14 +540,16 @@ def _diff_schema_details(
     old_type = old_schema.get("type")
     new_type = new_schema.get("type")
     if old_type and new_type and old_type != new_type:
-        result.changes.append(Change(
-            kind="schema_type_changed",
-            severity=Severity.BREAKING,
-            path=schema_path,
-            description=f"Schema '{name}' type changed from '{old_type}' to '{new_type}'",
-            old_value=old_type,
-            new_value=new_type,
-        ))
+        result.changes.append(
+            Change(
+                kind="schema_type_changed",
+                severity=Severity.BREAKING,
+                path=schema_path,
+                description=f"Schema '{name}' type changed from '{old_type}' to '{new_type}'",
+                old_value=old_type,
+                new_value=new_type,
+            )
+        )
 
     # Required properties changes
     old_required = set(old_schema.get("required", []))
@@ -497,21 +557,25 @@ def _diff_schema_details(
 
     newly_required = new_required - old_required
     for prop in newly_required:
-        result.changes.append(Change(
-            kind="property_became_required",
-            severity=Severity.BREAKING,
-            path=f"{schema_path}.{prop}",
-            description=f"Property '{prop}' in schema '{name}' became required",
-        ))
+        result.changes.append(
+            Change(
+                kind="property_became_required",
+                severity=Severity.BREAKING,
+                path=f"{schema_path}.{prop}",
+                description=f"Property '{prop}' in schema '{name}' became required",
+            )
+        )
 
     no_longer_required = old_required - new_required
     for prop in no_longer_required:
-        result.changes.append(Change(
-            kind="property_no_longer_required",
-            severity=Severity.NON_BREAKING,
-            path=f"{schema_path}.{prop}",
-            description=f"Property '{prop}' in schema '{name}' is no longer required",
-        ))
+        result.changes.append(
+            Change(
+                kind="property_no_longer_required",
+                severity=Severity.NON_BREAKING,
+                path=f"{schema_path}.{prop}",
+                description=f"Property '{prop}' in schema '{name}' is no longer required",
+            )
+        )
 
     # Schema-level enum changes (must be outside property loop)
     old_schema_enum = old_schema.get("enum")
@@ -519,13 +583,15 @@ def _diff_schema_details(
     if old_schema_enum and new_schema_enum:
         removed_values = set(old_schema_enum) - set(new_schema_enum)
         if removed_values:
-            result.changes.append(Change(
-                kind="enum_values_removed",
-                severity=Severity.BREAKING,
-                path=schema_path,
-                description=f"Schema '{name}' removed enum values: {removed_values}",
-                old_value=list(removed_values),
-            ))
+            result.changes.append(
+                Change(
+                    kind="enum_values_removed",
+                    severity=Severity.BREAKING,
+                    path=schema_path,
+                    description=f"Schema '{name}' removed enum values: {removed_values}",
+                    old_value=list(removed_values),
+                )
+            )
 
     # Property changes
     old_props = old_schema.get("properties", {})
@@ -533,21 +599,27 @@ def _diff_schema_details(
 
     for prop_name in old_props:
         if prop_name not in new_props:
-            result.changes.append(Change(
-                kind="property_removed",
-                severity=Severity.BREAKING if prop_name in old_required else Severity.DANGEROUS,
-                path=f"{schema_path}.properties.{prop_name}",
-                description=f"Property '{prop_name}' removed from schema '{name}'",
-            ))
+            result.changes.append(
+                Change(
+                    kind="property_removed",
+                    severity=Severity.BREAKING
+                    if prop_name in old_required
+                    else Severity.DANGEROUS,
+                    path=f"{schema_path}.properties.{prop_name}",
+                    description=f"Property '{prop_name}' removed from schema '{name}'",
+                )
+            )
 
     for prop_name in new_props:
         if prop_name not in old_props:
-            result.changes.append(Change(
-                kind="property_added",
-                severity=Severity.NON_BREAKING,
-                path=f"{schema_path}.properties.{prop_name}",
-                description=f"Property '{prop_name}' added to schema '{name}'",
-            ))
+            result.changes.append(
+                Change(
+                    kind="property_added",
+                    severity=Severity.NON_BREAKING,
+                    path=f"{schema_path}.properties.{prop_name}",
+                    description=f"Property '{prop_name}' added to schema '{name}'",
+                )
+            )
 
     for prop_name in old_props:
         if prop_name not in new_props:
@@ -556,32 +628,40 @@ def _diff_schema_details(
         new_prop = new_props[prop_name]
 
         # Property type change
-        if old_prop.get("type") and new_prop.get("type") and old_prop["type"] != new_prop["type"]:
-            result.changes.append(Change(
-                kind="property_type_changed",
-                severity=Severity.BREAKING,
-                path=f"{schema_path}.properties.{prop_name}",
-                description=(
-        f"Property '{prop_name}' in '{name}' type changed"
-        f" from '{old_prop['type']}' to '{new_prop['type']}'"
-    ),
-                old_value=old_prop["type"],
-                new_value=new_prop["type"],
-            ))
+        if (
+            old_prop.get("type")
+            and new_prop.get("type")
+            and old_prop["type"] != new_prop["type"]
+        ):
+            result.changes.append(
+                Change(
+                    kind="property_type_changed",
+                    severity=Severity.BREAKING,
+                    path=f"{schema_path}.properties.{prop_name}",
+                    description=(
+                        f"Property '{prop_name}' in '{name}' type changed"
+                        f" from '{old_prop['type']}' to '{new_prop['type']}'"
+                    ),
+                    old_value=old_prop["type"],
+                    new_value=new_prop["type"],
+                )
+            )
 
         # Format change
         if old_prop.get("format") != new_prop.get("format"):
             old_fmt = old_prop.get("format", "")
             new_fmt = new_prop.get("format", "")
             if old_fmt and new_fmt and old_fmt != new_fmt:
-                result.changes.append(Change(
-                    kind="property_format_changed",
-                    severity=Severity.DANGEROUS,
-                    path=f"{schema_path}.properties.{prop_name}",
-                    description=f"Property '{prop_name}' in '{name}' format changed from '{old_fmt}' to '{new_fmt}'",
-                    old_value=old_fmt,
-                    new_value=new_fmt,
-                ))
+                result.changes.append(
+                    Change(
+                        kind="property_format_changed",
+                        severity=Severity.DANGEROUS,
+                        path=f"{schema_path}.properties.{prop_name}",
+                        description=f"Property '{prop_name}' in '{name}' format changed from '{old_fmt}' to '{new_fmt}'",
+                        old_value=old_fmt,
+                        new_value=new_fmt,
+                    )
+                )
 
         # Enum changes
         old_enum = old_prop.get("enum")
@@ -589,17 +669,21 @@ def _diff_schema_details(
         if old_enum and new_enum:
             removed_values = set(old_enum) - set(new_enum)
             if removed_values:
-                result.changes.append(Change(
-                    kind="enum_values_removed",
-                    severity=Severity.BREAKING,
-                    path=f"{schema_path}.properties.{prop_name}",
-                    description=f"Enum property '{prop_name}' in '{name}' removed values: {removed_values}",
-                    old_value=list(removed_values),
-                ))
+                result.changes.append(
+                    Change(
+                        kind="enum_values_removed",
+                        severity=Severity.BREAKING,
+                        path=f"{schema_path}.properties.{prop_name}",
+                        description=f"Enum property '{prop_name}' in '{name}' removed values: {removed_values}",
+                        old_value=list(removed_values),
+                    )
+                )
 
 
 def _diff_security_schemes(
-    old: dict[str, Any], new: dict[str, Any], result: DiffResult,
+    old: dict[str, Any],
+    new: dict[str, Any],
+    result: DiffResult,
 ) -> None:
     """Detect security scheme changes."""
     old_schemes = old.get("components", {}).get("securitySchemes", {})
@@ -607,57 +691,69 @@ def _diff_security_schemes(
 
     for name in old_schemes:
         if name not in new_schemes:
-            result.changes.append(Change(
-                kind="security_scheme_removed",
-                severity=Severity.BREAKING,
-                path=f"components.securitySchemes.{name}",
-                description=f"Security scheme '{name}' was removed",
-            ))
+            result.changes.append(
+                Change(
+                    kind="security_scheme_removed",
+                    severity=Severity.BREAKING,
+                    path=f"components.securitySchemes.{name}",
+                    description=f"Security scheme '{name}' was removed",
+                )
+            )
 
     for name in new_schemes:
         if name not in old_schemes:
-            result.changes.append(Change(
-                kind="security_scheme_added",
-                severity=Severity.NON_BREAKING,
-                path=f"components.securitySchemes.{name}",
-                description=f"Security scheme '{name}' was added",
-            ))
+            result.changes.append(
+                Change(
+                    kind="security_scheme_added",
+                    severity=Severity.NON_BREAKING,
+                    path=f"components.securitySchemes.{name}",
+                    description=f"Security scheme '{name}' was added",
+                )
+            )
 
     for name in old_schemes:
         if name not in new_schemes:
             continue
         if old_schemes[name].get("type") != new_schemes[name].get("type"):
-            result.changes.append(Change(
-                kind="security_scheme_type_changed",
-                severity=Severity.BREAKING,
-                path=f"components.securitySchemes.{name}",
-                description=f"Security scheme '{name}' type changed",
-                old_value=old_schemes[name].get("type"),
-                new_value=new_schemes[name].get("type"),
-            ))
+            result.changes.append(
+                Change(
+                    kind="security_scheme_type_changed",
+                    severity=Severity.BREAKING,
+                    path=f"components.securitySchemes.{name}",
+                    description=f"Security scheme '{name}' type changed",
+                    old_value=old_schemes[name].get("type"),
+                    new_value=new_schemes[name].get("type"),
+                )
+            )
 
 
 def _diff_security_requirements(
-    old: dict[str, Any], new: dict[str, Any], result: DiffResult,
+    old: dict[str, Any],
+    new: dict[str, Any],
+    result: DiffResult,
 ) -> None:
     """Detect global security requirement changes."""
     old_sec = old.get("security", [])
     new_sec = new.get("security", [])
 
     if old_sec and not new_sec:
-        result.changes.append(Change(
-            kind="global_security_removed",
-            severity=Severity.DANGEROUS,
-            path="security",
-            description="Global security requirements were removed",
-        ))
+        result.changes.append(
+            Change(
+                kind="global_security_removed",
+                severity=Severity.DANGEROUS,
+                path="security",
+                description="Global security requirements were removed",
+            )
+        )
     elif not old_sec and new_sec:
-        result.changes.append(Change(
-            kind="global_security_added",
-            severity=Severity.DANGEROUS,
-            path="security",
-            description="Global security requirements were added",
-        ))
+        result.changes.append(
+            Change(
+                kind="global_security_added",
+                severity=Severity.DANGEROUS,
+                path="security",
+                description="Global security requirements were added",
+            )
+        )
 
 
 def _diff_servers(old: dict[str, Any], new: dict[str, Any], result: DiffResult) -> None:
@@ -670,21 +766,25 @@ def _diff_servers(old: dict[str, Any], new: dict[str, Any], result: DiffResult) 
 
     for url in old_urls:
         if url not in new_urls:
-            result.changes.append(Change(
-                kind="server_removed",
-                severity=Severity.DANGEROUS,
-                path=f"servers.{url}",
-                description=f"Server '{url}' was removed",
-            ))
+            result.changes.append(
+                Change(
+                    kind="server_removed",
+                    severity=Severity.DANGEROUS,
+                    path=f"servers.{url}",
+                    description=f"Server '{url}' was removed",
+                )
+            )
 
     for url in new_urls:
         if url not in old_urls:
-            result.changes.append(Change(
-                kind="server_added",
-                severity=Severity.INFO,
-                path=f"servers.{url}",
-                description=f"Server '{url}' was added",
-            ))
+            result.changes.append(
+                Change(
+                    kind="server_added",
+                    severity=Severity.INFO,
+                    path=f"servers.{url}",
+                    description=f"Server '{url}' was added",
+                )
+            )
 
 
 def _diff_info(old: dict[str, Any], new: dict[str, Any], result: DiffResult) -> None:
@@ -696,24 +796,28 @@ def _diff_info(old: dict[str, Any], new: dict[str, Any], result: DiffResult) -> 
     new_title = new_info.get("title", "")
 
     if old_title != new_title:
-        result.changes.append(Change(
-            kind="title_changed",
-            severity=Severity.INFO,
-            path="info.title",
-            description=f"API title changed from '{old_title}' to '{new_title}'",
-            old_value=old_title,
-            new_value=new_title,
-        ))
+        result.changes.append(
+            Change(
+                kind="title_changed",
+                severity=Severity.INFO,
+                path="info.title",
+                description=f"API title changed from '{old_title}' to '{new_title}'",
+                old_value=old_title,
+                new_value=new_title,
+            )
+        )
 
     old_api_version = old_info.get("version", "")
     new_api_version = new_info.get("version", "")
 
     if old_api_version != new_api_version:
-        result.changes.append(Change(
-            kind="api_version_changed",
-            severity=Severity.INFO,
-            path="info.version",
-            description=f"API version changed from '{old_api_version}' to '{new_api_version}'",
-            old_value=old_api_version,
-            new_value=new_api_version,
-        ))
+        result.changes.append(
+            Change(
+                kind="api_version_changed",
+                severity=Severity.INFO,
+                path="info.version",
+                description=f"API version changed from '{old_api_version}' to '{new_api_version}'",
+                old_value=old_api_version,
+                new_value=new_api_version,
+            )
+        )
