@@ -156,6 +156,35 @@ def _diff_paths(old: dict[str, Any], new: dict[str, Any], result: DiffResult) ->
         _diff_operations(path, old_paths[path], new_paths[path], result)
 
 
+
+def _param_key(param: dict[str, Any]) -> tuple[str, str]:
+    """Identity key for a parameter: (in, name), or ('$ref', target) for refs.
+
+    Keying unresolved $ref parameters by their target keeps distinct refs
+    from colliding on the ('', '') key.
+    """
+    if "$ref" in param:
+        return ("$ref", str(param["$ref"]))
+    return (param.get("in", ""), param.get("name", ""))
+
+
+def _effective_parameters(
+    path_item: dict[str, Any],
+    op: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Merge path-item-level parameters with operation-level ones.
+
+    Per the OpenAPI spec, parameters declared on a path item apply to every
+    operation under it; an operation-level parameter with the same (name, in)
+    pair overrides the path-level definition.
+    """
+    merged: dict[tuple[str, str], dict[str, Any]] = {}
+    for source in (path_item.get("parameters") or [], op.get("parameters") or []):
+        for param in source:
+            if isinstance(param, dict):
+                merged[_param_key(param)] = param
+    return list(merged.values())
+
 def _diff_operations(
     path: str,
     old_item: dict[str, Any],
@@ -192,7 +221,11 @@ def _diff_operations(
                 )
             )
         elif old_op and new_op:
-            _diff_operation_details(path, method, old_op, new_op, result)
+            _diff_operation_details(
+                path, method, old_op, new_op, result,
+                old_params=_effective_parameters(old_item, old_op),
+                new_params=_effective_parameters(new_item, new_op),
+            )
 
 
 def _diff_operation_details(
@@ -201,14 +234,23 @@ def _diff_operation_details(
     old_op: dict[str, Any],
     new_op: dict[str, Any],
     result: DiffResult,
+    old_params: list[dict[str, Any]] | None = None,
+    new_params: list[dict[str, Any]] | None = None,
 ) -> None:
-    """Detect changes within an operation (parameters, responses, requestBody)."""
+    """Detect changes within an operation (parameters, responses, requestBody).
+
+    ``old_params``/``new_params`` are the effective parameter lists with
+    path-item-level parameters already merged in; when omitted, the
+    operation's own parameters are used.
+    """
     op_path = f"paths.{path}.{method}"
 
-    # Check parameters
-    _diff_parameters(
-        op_path, old_op.get("parameters", []), new_op.get("parameters", []), result
-    )
+    # Check parameters (path-item-level parameters merged by the caller)
+    if old_params is None:
+        old_params = old_op.get("parameters", [])
+    if new_params is None:
+        new_params = new_op.get("parameters", [])
+    _diff_parameters(op_path, old_params, new_params, result)
 
     # Check request body
     _diff_request_body(
