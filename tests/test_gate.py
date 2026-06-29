@@ -8,13 +8,21 @@ def _make_result(breaking=0, dangerous=0, non_breaking=0, info=0):
     """Helper to create a DiffResult with specified change counts."""
     changes = []
     for _ in range(breaking):
-        changes.append(Change(kind="x", severity=Severity.BREAKING, path="", description=""))
+        changes.append(
+            Change(kind="x", severity=Severity.BREAKING, path="", description="")
+        )
     for _ in range(dangerous):
-        changes.append(Change(kind="x", severity=Severity.DANGEROUS, path="", description=""))
+        changes.append(
+            Change(kind="x", severity=Severity.DANGEROUS, path="", description="")
+        )
     for _ in range(non_breaking):
-        changes.append(Change(kind="x", severity=Severity.NON_BREAKING, path="", description=""))
+        changes.append(
+            Change(kind="x", severity=Severity.NON_BREAKING, path="", description="")
+        )
     for _ in range(info):
-        changes.append(Change(kind="x", severity=Severity.INFO, path="", description=""))
+        changes.append(
+            Change(kind="x", severity=Severity.INFO, path="", description="")
+        )
     return DiffResult(changes=changes)
 
 
