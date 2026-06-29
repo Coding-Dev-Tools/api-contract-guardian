@@ -1,7 +1,10 @@
 """Tests for the migration module."""
 
 from api_contract_guardian.diff import Change, DiffResult, Severity
-from api_contract_guardian.migration import generate_migration_guide, generate_migration_guide_json
+from api_contract_guardian.migration import (
+    generate_migration_guide,
+    generate_migration_guide_json,
+)
 
 
 def _make_result(changes=None, old_version="3.0.0", new_version="3.1.0"):
