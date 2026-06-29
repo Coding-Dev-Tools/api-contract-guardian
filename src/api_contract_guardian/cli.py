@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import typer
 from pathlib import Path
 from typing import Any
+
+import typer
 
 # Lazy imports — jwt+cryptography+deepdiff+yaml add ~200ms at module level.
 # Deferring heavy deps to command execution cuts cold start from ~440ms to ~180ms.
@@ -70,7 +71,7 @@ def _load_and_validate(path: str) -> dict:
     except SpecLoadError as e:
         from rich.console import Console
         Console().print(f"[red]Error loading: {e}[/red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from e
 
 
 def _print_result(result: Any) -> None:
@@ -121,6 +122,7 @@ def diff(
 ) -> None:
     """Compare two OpenAPI specs and show all detected changes."""
     import json
+
     import yaml
 
     from .diff import diff_specs
@@ -180,6 +182,7 @@ def check(
 ) -> None:
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
     import json
+
     import yaml
 
     from .diff import diff_specs
@@ -243,6 +246,7 @@ def migrate(
 ) -> None:
     """Generate a migration guide between two OpenAPI spec versions."""
     import json
+
     import yaml
 
     from .diff import diff_specs
