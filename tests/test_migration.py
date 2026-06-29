@@ -8,7 +8,9 @@ from api_contract_guardian.migration import (
 
 
 def _make_result(changes=None, old_version="3.0.0", new_version="3.1.0"):
-    return DiffResult(changes=changes or [], old_version=old_version, new_version=new_version)
+    return DiffResult(
+        changes=changes or [], old_version=old_version, new_version=new_version
+    )
 
 
 class TestGenerateMigrationGuide:
@@ -30,7 +32,12 @@ class TestGenerateMigrationGuide:
 
     def test_breaking_changes_section(self):
         changes = [
-            Change(kind="path_removed", severity=Severity.BREAKING, path="paths./users", description="Path removed")
+            Change(
+                kind="path_removed",
+                severity=Severity.BREAKING,
+                path="paths./users",
+                description="Path removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -40,7 +47,10 @@ class TestGenerateMigrationGuide:
     def test_dangerous_changes_section(self):
         changes = [
             Change(
-                kind="operation_deprecated", severity=Severity.DANGEROUS, path="paths./old", description="Deprecated"
+                kind="operation_deprecated",
+                severity=Severity.DANGEROUS,
+                path="paths./old",
+                description="Deprecated",
             )
         ]
         result = _make_result(changes=changes)
@@ -49,14 +59,26 @@ class TestGenerateMigrationGuide:
 
     def test_non_breaking_changes_section(self):
         changes = [
-            Change(kind="path_added", severity=Severity.NON_BREAKING, path="paths./new", description="Path added")
+            Change(
+                kind="path_added",
+                severity=Severity.NON_BREAKING,
+                path="paths./new",
+                description="Path added",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Non-Breaking Changes" in guide
 
     def test_info_section(self):
-        changes = [Change(kind="title_changed", severity=Severity.INFO, path="info.title", description="Title changed")]
+        changes = [
+            Change(
+                kind="title_changed",
+                severity=Severity.INFO,
+                path="info.title",
+                description="Title changed",
+            )
+        ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Informational" in guide
@@ -73,14 +95,26 @@ class TestGenerateMigrationGuide:
 
     def test_migration_steps_generated_for_breaking(self):
         changes = [
-            Change(kind="path_removed", severity=Severity.BREAKING, path="paths./users", description="Path removed")
+            Change(
+                kind="path_removed",
+                severity=Severity.BREAKING,
+                path="paths./users",
+                description="Path removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Recommended Migration Steps" in guide
 
     def test_no_migration_steps_without_breaking(self):
-        changes = [Change(kind="path_added", severity=Severity.NON_BREAKING, path="paths./new", description="Added")]
+        changes = [
+            Change(
+                kind="path_added",
+                severity=Severity.NON_BREAKING,
+                path="paths./new",
+                description="Added",
+            )
+        ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
         assert "Recommended Migration Steps" not in guide
@@ -107,7 +141,12 @@ class TestMigrationStepGeneration:
 
     def test_path_removed_step(self):
         changes = [
-            Change(kind="path_removed", severity=Severity.BREAKING, path="paths./users", description="Path removed")
+            Change(
+                kind="path_removed",
+                severity=Severity.BREAKING,
+                path="paths./users",
+                description="Path removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -116,7 +155,12 @@ class TestMigrationStepGeneration:
 
     def test_operation_removed_step(self):
         changes = [
-            Change(kind="operation_removed", severity=Severity.BREAKING, path="paths./users.delete", description="DELETE removed")
+            Change(
+                kind="operation_removed",
+                severity=Severity.BREAKING,
+                path="paths./users.delete",
+                description="DELETE removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -124,7 +168,12 @@ class TestMigrationStepGeneration:
 
     def test_parameter_became_required_step(self):
         changes = [
-            Change(kind="parameter_became_required", severity=Severity.BREAKING, path="paths./users.get.parameters.query.id", description="Param became required")
+            Change(
+                kind="parameter_became_required",
+                severity=Severity.BREAKING,
+                path="paths./users.get.parameters.query.id",
+                description="Param became required",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -132,7 +181,12 @@ class TestMigrationStepGeneration:
 
     def test_required_parameter_added_step(self):
         changes = [
-            Change(kind="parameter_added", severity=Severity.BREAKING, path="paths./users.get.parameters.query.sort", description="Parameter 'sort' (query) was added (required)")
+            Change(
+                kind="parameter_added",
+                severity=Severity.BREAKING,
+                path="paths./users.get.parameters.query.sort",
+                description="Parameter 'sort' (query) was added (required)",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -140,7 +194,12 @@ class TestMigrationStepGeneration:
 
     def test_schema_removed_step(self):
         changes = [
-            Change(kind="schema_removed", severity=Severity.BREAKING, path="components.schemas.Legacy", description="Schema removed")
+            Change(
+                kind="schema_removed",
+                severity=Severity.BREAKING,
+                path="components.schemas.Legacy",
+                description="Schema removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -149,7 +208,12 @@ class TestMigrationStepGeneration:
 
     def test_type_changed_step(self):
         changes = [
-            Change(kind="property_type_changed", severity=Severity.BREAKING, path="components.schemas.User.age", description="Type changed")
+            Change(
+                kind="property_type_changed",
+                severity=Severity.BREAKING,
+                path="components.schemas.User.age",
+                description="Type changed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -157,7 +221,12 @@ class TestMigrationStepGeneration:
 
     def test_schema_type_changed_step(self):
         changes = [
-            Change(kind="schema_type_changed", severity=Severity.BREAKING, path="components.schemas.User", description="Schema type changed")
+            Change(
+                kind="schema_type_changed",
+                severity=Severity.BREAKING,
+                path="components.schemas.User",
+                description="Schema type changed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -165,7 +234,12 @@ class TestMigrationStepGeneration:
 
     def test_parameter_type_changed_step(self):
         changes = [
-            Change(kind="parameter_type_changed", severity=Severity.BREAKING, path="paths./users.get.parameters.query.id", description="Param type changed")
+            Change(
+                kind="parameter_type_changed",
+                severity=Severity.BREAKING,
+                path="paths./users.get.parameters.query.id",
+                description="Param type changed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -173,7 +247,12 @@ class TestMigrationStepGeneration:
 
     def test_property_removed_step(self):
         changes = [
-            Change(kind="property_removed", severity=Severity.BREAKING, path="components.schemas.User.email", description="Property removed")
+            Change(
+                kind="property_removed",
+                severity=Severity.BREAKING,
+                path="components.schemas.User.email",
+                description="Property removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -181,7 +260,12 @@ class TestMigrationStepGeneration:
 
     def test_enum_values_removed_step(self):
         changes = [
-            Change(kind="enum_values_removed", severity=Severity.BREAKING, path="components.schemas.Status", description="Enum values removed")
+            Change(
+                kind="enum_values_removed",
+                severity=Severity.BREAKING,
+                path="components.schemas.Status",
+                description="Enum values removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -189,7 +273,12 @@ class TestMigrationStepGeneration:
 
     def test_request_body_became_required_step(self):
         changes = [
-            Change(kind="request_body_became_required", severity=Severity.BREAKING, path="paths./users.post.requestBody", description="Request body became required")
+            Change(
+                kind="request_body_became_required",
+                severity=Severity.BREAKING,
+                path="paths./users.post.requestBody",
+                description="Request body became required",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -197,7 +286,12 @@ class TestMigrationStepGeneration:
 
     def test_content_type_removed_step(self):
         changes = [
-            Change(kind="request_content_type_removed", severity=Severity.BREAKING, path="paths./users.post.requestBody.content.application/xml", description="Content type removed")
+            Change(
+                kind="request_content_type_removed",
+                severity=Severity.BREAKING,
+                path="paths./users.post.requestBody.content.application/xml",
+                description="Content type removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -205,7 +299,12 @@ class TestMigrationStepGeneration:
 
     def test_response_content_type_removed_step(self):
         changes = [
-            Change(kind="response_content_type_removed", severity=Severity.BREAKING, path="paths./users.get.responses.200.content.application/xml", description="Response content type removed")
+            Change(
+                kind="response_content_type_removed",
+                severity=Severity.BREAKING,
+                path="paths./users.get.responses.200.content.application/xml",
+                description="Response content type removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -214,7 +313,12 @@ class TestMigrationStepGeneration:
     def test_unrecognized_breaking_change_fallback_step(self):
         """An unrecognized breaking change kind still produces a generic step."""
         changes = [
-            Change(kind="some_new_breaking_kind", severity=Severity.BREAKING, path="x", description="Unknown")
+            Change(
+                kind="some_new_breaking_kind",
+                severity=Severity.BREAKING,
+                path="x",
+                description="Unknown",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -224,9 +328,24 @@ class TestMigrationStepGeneration:
     def test_multiple_step_types_combined(self):
         """Multiple different breaking change kinds produce multiple distinct steps."""
         changes = [
-            Change(kind="path_removed", severity=Severity.BREAKING, path="paths./old", description="Path removed"),
-            Change(kind="schema_removed", severity=Severity.BREAKING, path="components.schemas.Old", description="Schema removed"),
-            Change(kind="enum_values_removed", severity=Severity.BREAKING, path="components.schemas.Status", description="Enum values removed"),
+            Change(
+                kind="path_removed",
+                severity=Severity.BREAKING,
+                path="paths./old",
+                description="Path removed",
+            ),
+            Change(
+                kind="schema_removed",
+                severity=Severity.BREAKING,
+                path="components.schemas.Old",
+                description="Schema removed",
+            ),
+            Change(
+                kind="enum_values_removed",
+                severity=Severity.BREAKING,
+                path="components.schemas.Status",
+                description="Enum values removed",
+            ),
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -234,11 +353,15 @@ class TestMigrationStepGeneration:
         assert "Replace removed schemas" in guide
         assert "Update enum value references" in guide
 
-
     def test_operation_id_removed_step(self):
         """operation_id_removed produces an SDK codegen migration step."""
         changes = [
-            Change(kind="operation_id_removed", severity=Severity.BREAKING, path="paths./users.get", description="operationId removed")
+            Change(
+                kind="operation_id_removed",
+                severity=Severity.BREAKING,
+                path="paths./users.get",
+                description="operationId removed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -247,7 +370,12 @@ class TestMigrationStepGeneration:
     def test_operation_id_changed_step(self):
         """operation_id_changed produces an SDK codegen migration step."""
         changes = [
-            Change(kind="operation_id_changed", severity=Severity.BREAKING, path="paths./users.get", description="operationId changed")
+            Change(
+                kind="operation_id_changed",
+                severity=Severity.BREAKING,
+                path="paths./users.get",
+                description="operationId changed",
+            )
         ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide(result)
@@ -264,7 +392,14 @@ class TestGenerateMigrationGuideJson:
         assert guide["migration_steps"] == []
 
     def test_has_breaking_changes(self):
-        changes = [Change(kind="path_removed", severity=Severity.BREAKING, path="p", description="d")]
+        changes = [
+            Change(
+                kind="path_removed",
+                severity=Severity.BREAKING,
+                path="p",
+                description="d",
+            )
+        ]
         result = _make_result(changes=changes)
         guide = generate_migration_guide_json(result)
         assert len(guide["breaking_changes"]) == 1
