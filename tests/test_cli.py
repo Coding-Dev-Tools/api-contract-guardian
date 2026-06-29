@@ -82,7 +82,10 @@ def _dangerous_specs():
         "info": {"title": "Test API", "version": "1.0.0"},
         "paths": {
             "/users": {
-                "get": {"deprecated": True, "responses": {"200": {"description": "List users"}}},
+                "get": {
+                    "deprecated": True,
+                    "responses": {"200": {"description": "List users"}},
+                },
             },
         },
     }
@@ -138,7 +141,9 @@ class TestDiffCommand:
         """diff --format json outputs valid JSON with no changes."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "json"])
+            result = runner.invoke(
+                app, ["diff", old_path, new_path, "--format", "json"]
+            )
             assert result.exit_code == 0
             assert '"breaking": 0' in result.output
         finally:
@@ -149,7 +154,9 @@ class TestDiffCommand:
         """diff detects breaking changes."""
         old_path, new_path = _breaking_specs()
         try:
-            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "json"])
+            result = runner.invoke(
+                app, ["diff", old_path, new_path, "--format", "json"]
+            )
             assert result.exit_code == 0
             assert '"breaking": 1' in result.output or "path_removed" in result.output
         finally:
@@ -174,7 +181,9 @@ class TestDiffCommand:
         old_path, new_path = _identical_specs()
         out_path = tempfile.mktemp(suffix=".json")
         try:
-            result = runner.invoke(app, ["diff", old_path, new_path, "--output", out_path])
+            result = runner.invoke(
+                app, ["diff", old_path, new_path, "--output", out_path]
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -222,9 +231,14 @@ class TestDiffCommand:
         """diff --format markdown produces migration guide output."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "markdown"])
+            result = runner.invoke(
+                app, ["diff", old_path, new_path, "--format", "markdown"]
+            )
             assert result.exit_code == 0
-            assert "Migration Guide" in result.output or "breaking" in result.output.lower()
+            assert (
+                "Migration Guide" in result.output
+                or "breaking" in result.output.lower()
+            )
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
@@ -234,7 +248,18 @@ class TestDiffCommand:
         old_path, new_path = _identical_specs()
         out_path = tempfile.mktemp(suffix=".md")
         try:
-            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "markdown", "--output", out_path])
+            result = runner.invoke(
+                app,
+                [
+                    "diff",
+                    old_path,
+                    new_path,
+                    "--format",
+                    "markdown",
+                    "--output",
+                    out_path,
+                ],
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -250,7 +275,9 @@ class TestDiffCommand:
         """diff --format yaml outputs valid YAML with no changes."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "yaml"])
+            result = runner.invoke(
+                app, ["diff", old_path, new_path, "--format", "yaml"]
+            )
             assert result.exit_code == 0
             assert "breaking: 0" in result.output
             assert "old_version" in result.output
@@ -263,7 +290,10 @@ class TestDiffCommand:
         old_path, new_path = _identical_specs()
         out_path = tempfile.mktemp(suffix=".yaml")
         try:
-            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "yaml", "--output", out_path])
+            result = runner.invoke(
+                app,
+                ["diff", old_path, new_path, "--format", "yaml", "--output", out_path],
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -280,7 +310,10 @@ class TestDiffCommand:
         old_path, new_path = _identical_specs()
         out_path = tempfile.mktemp(suffix=".json")
         try:
-            result = runner.invoke(app, ["diff", old_path, new_path, "--format", "json", "--output", out_path])
+            result = runner.invoke(
+                app,
+                ["diff", old_path, new_path, "--format", "json", "--output", out_path],
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -309,7 +342,9 @@ class TestDiffCommand:
         try:
             result = runner.invoke(app, ["diff", old_path, new_path])
             assert result.exit_code == 1
-            assert "Error validating" in result.output or "not supported" in result.output
+            assert (
+                "Error validating" in result.output or "not supported" in result.output
+            )
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
@@ -354,7 +389,9 @@ class TestCheckCommand:
         """check fails (exit 1) when --fail-on-dangerous is set and dangerous changes exist."""
         old_path, new_path = _dangerous_specs()
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--fail-on-dangerous"])
+            result = runner.invoke(
+                app, ["check", old_path, new_path, "--fail-on-dangerous"]
+            )
             assert result.exit_code == 1
             assert "dangerous" in result.output.lower()
         finally:
@@ -365,7 +402,9 @@ class TestCheckCommand:
         """check passes when --max-dangerous exceeds the count of dangerous changes."""
         old_path, new_path = _dangerous_specs()
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--max-dangerous", "3"])
+            result = runner.invoke(
+                app, ["check", old_path, new_path, "--max-dangerous", "3"]
+            )
             assert result.exit_code == 0
         finally:
             os.unlink(old_path)
@@ -375,7 +414,9 @@ class TestCheckCommand:
         """check passes even with breaking changes when --allow-breaking is used."""
         old_path, new_path = _breaking_specs()
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--allow-breaking"])
+            result = runner.invoke(
+                app, ["check", old_path, new_path, "--allow-breaking"]
+            )
             assert result.exit_code == 0
         finally:
             os.unlink(old_path)
@@ -385,7 +426,9 @@ class TestCheckCommand:
         """check passes with --max-breaking=0 when no changes."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--max-breaking", "0"])
+            result = runner.invoke(
+                app, ["check", old_path, new_path, "--max-breaking", "0"]
+            )
             assert result.exit_code == 0
         finally:
             os.unlink(old_path)
@@ -396,7 +439,9 @@ class TestCheckCommand:
         old_path, new_path = _identical_specs()
         out_path = tempfile.mktemp(suffix=".json")
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--output", out_path])
+            result = runner.invoke(
+                app, ["check", old_path, new_path, "--output", out_path]
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -413,7 +458,9 @@ class TestCheckCommand:
         """check --format json outputs the structured gate payload."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--format", "json"])
+            result = runner.invoke(
+                app, ["check", old_path, new_path, "--format", "json"]
+            )
             assert result.exit_code == 0
             assert '"gate"' in result.output
             assert '"diff"' in result.output
@@ -425,7 +472,9 @@ class TestCheckCommand:
         """check rejects unsupported output formats instead of falling back silently."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--format", "csv"])
+            result = runner.invoke(
+                app, ["check", old_path, new_path, "--format", "csv"]
+            )
             assert result.exit_code != 0
             assert "Unsupported check format" in result.output
         finally:
@@ -436,7 +485,9 @@ class TestCheckCommand:
         """check --format yaml prints inline YAML to stdout after gate message."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--format", "yaml"])
+            result = runner.invoke(
+                app, ["check", old_path, new_path, "--format", "yaml"]
+            )
             assert result.exit_code == 0
             assert "CI gate PASSED" in result.output
             # Strip the gate status line to get clean YAML
@@ -456,7 +507,10 @@ class TestCheckCommand:
         old_path, new_path = _identical_specs()
         out_path = tempfile.mktemp(suffix=".yaml")
         try:
-            result = runner.invoke(app, ["check", old_path, new_path, "--format", "yaml", "--output", out_path])
+            result = runner.invoke(
+                app,
+                ["check", old_path, new_path, "--format", "yaml", "--output", out_path],
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -489,7 +543,9 @@ class TestCheckCommand:
         try:
             result = runner.invoke(app, ["check", old_path, new_path])
             assert result.exit_code == 1
-            assert "Error validating" in result.output or "not supported" in result.output
+            assert (
+                "Error validating" in result.output or "not supported" in result.output
+            )
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
@@ -513,7 +569,9 @@ class TestMigrateCommand:
         """migrate --format json outputs structured JSON."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "json"])
+            result = runner.invoke(
+                app, ["migrate", old_path, new_path, "--format", "json"]
+            )
             assert result.exit_code == 0
             assert "summary" in result.output or "changes" in result.output
         finally:
@@ -525,7 +583,9 @@ class TestMigrateCommand:
         old_path, new_path = _identical_specs()
         out_path = tempfile.mktemp(suffix=".md")
         try:
-            result = runner.invoke(app, ["migrate", old_path, new_path, "--output", out_path])
+            result = runner.invoke(
+                app, ["migrate", old_path, new_path, "--output", out_path]
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -541,10 +601,16 @@ class TestMigrateCommand:
         """migrate --format yaml outputs YAML migration guide."""
         old_path, new_path = _nonbreaking_info_specs()
         try:
-            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "yaml"])
+            result = runner.invoke(
+                app, ["migrate", old_path, new_path, "--format", "yaml"]
+            )
             assert result.exit_code == 0
             assert "summary" in result.output or "changes" in result.output
-            assert "warning:" in result.output.lower() or "non_breaking" in result.output or "old_version" in result.output
+            assert (
+                "warning:" in result.output.lower()
+                or "non_breaking" in result.output
+                or "old_version" in result.output
+            )
         finally:
             os.unlink(old_path)
             os.unlink(new_path)
@@ -554,7 +620,18 @@ class TestMigrateCommand:
         old_path, new_path = _nonbreaking_info_specs()
         out_path = tempfile.mktemp(suffix=".yaml")
         try:
-            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "yaml", "--output", out_path])
+            result = runner.invoke(
+                app,
+                [
+                    "migrate",
+                    old_path,
+                    new_path,
+                    "--format",
+                    "yaml",
+                    "--output",
+                    out_path,
+                ],
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -571,7 +648,18 @@ class TestMigrateCommand:
         old_path, new_path = _nonbreaking_info_specs()
         out_path = tempfile.mktemp(suffix=".json")
         try:
-            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "json", "--output", out_path])
+            result = runner.invoke(
+                app,
+                [
+                    "migrate",
+                    old_path,
+                    new_path,
+                    "--format",
+                    "json",
+                    "--output",
+                    out_path,
+                ],
+            )
             assert result.exit_code == 0
             assert os.path.isfile(out_path)
             with open(out_path) as f:
@@ -588,7 +676,9 @@ class TestMigrateCommand:
         """migrate rejects unsupported output formats instead of falling back silently."""
         old_path, new_path = _identical_specs()
         try:
-            result = runner.invoke(app, ["migrate", old_path, new_path, "--format", "csv"])
+            result = runner.invoke(
+                app, ["migrate", old_path, new_path, "--format", "csv"]
+            )
             assert result.exit_code == 2
             assert "Unsupported migrate format" in result.output
         finally:
@@ -597,7 +687,9 @@ class TestMigrateCommand:
 
     def test_migrate_invalid_input(self):
         """migrate exits with code 1 for invalid files."""
-        result = runner.invoke(app, ["migrate", "no-such-file.yaml", "also-missing.yaml"])
+        result = runner.invoke(
+            app, ["migrate", "no-such-file.yaml", "also-missing.yaml"]
+        )
         assert result.exit_code == 1
 
 
@@ -638,8 +730,10 @@ class TestMainModule:
         # hit the free-tier paywall (the in-process mock doesn't
         # carry over to a separate process).
         from revenueholdings_license.rate_limiter import RateLimiter
+
         RateLimiter().reset("api-contract-guardian")
         from revenueholdings_license import Tier, generate_license_key
+
         env = os.environ.copy()
         env["REVENUEHOLDINGS_LICENSE_KEY"] = generate_license_key(Tier.PRO)
         # Ensure all environment variables are string keys and string values to prevent Popen TypeError on Windows
