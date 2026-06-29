@@ -67,7 +67,14 @@ class TestLoadSpec:
     def test_load_yml_extension(self, tmp_path):
         p = tmp_path / "spec.yml"
         p.write_text(
-            yaml.dump({"openapi": "3.0.3", "info": {"title": "T", "version": "1.0.0"}, "paths": {}}), encoding="utf-8"
+            yaml.dump(
+                {
+                    "openapi": "3.0.3",
+                    "info": {"title": "T", "version": "1.0.0"},
+                    "paths": {},
+                }
+            ),
+            encoding="utf-8",
         )
         spec = load_spec(p)
         assert spec["openapi"] == "3.0.3"
@@ -107,7 +114,11 @@ class TestLoadSpec:
 
     def test_load_unknown_extension_tries_yaml_then_json(self, tmp_path):
         p = tmp_path / "spec.txt"
-        spec_data = {"openapi": "3.0.3", "info": {"title": "T", "version": "1.0.0"}, "paths": {}}
+        spec_data = {
+            "openapi": "3.0.3",
+            "info": {"title": "T", "version": "1.0.0"},
+            "paths": {},
+        }
         p.write_text(yaml.dump(spec_data), encoding="utf-8")
         spec = load_spec(p)
         assert spec["openapi"] == "3.0.3"
@@ -125,12 +136,24 @@ class TestLoadSpec:
 
 class TestLoadSpecFromString:
     def test_load_yaml_string(self):
-        content = yaml.dump({"openapi": "3.0.3", "info": {"title": "T", "version": "1.0.0"}, "paths": {}})
+        content = yaml.dump(
+            {
+                "openapi": "3.0.3",
+                "info": {"title": "T", "version": "1.0.0"},
+                "paths": {},
+            }
+        )
         spec = load_spec_from_string(content, fmt="yaml")
         assert spec["openapi"] == "3.0.3"
 
     def test_load_json_string(self):
-        content = json.dumps({"openapi": "3.0.3", "info": {"title": "T", "version": "1.0.0"}, "paths": {}})
+        content = json.dumps(
+            {
+                "openapi": "3.0.3",
+                "info": {"title": "T", "version": "1.0.0"},
+                "paths": {},
+            }
+        )
         spec = load_spec_from_string(content, fmt="json")
         assert spec["openapi"] == "3.0.3"
 
