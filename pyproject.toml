@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -70,3 +71,70 @@ ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["api_contract_guardian"]
+=======
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "api-contract-guardian"
+version = "0.1.0"
+description = "CLI tool that monitors OpenAPI schema diffs, detects breaking changes, generates migration guides, and gates CI pipelines on contract violations"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "Revenue Holdings"}]
+keywords = ["openapi", "api", "contract", "breaking-changes", "ci", "diff"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+    "jsonschema>=4.17.0",
+    "deepdiff>=6.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Coding-Dev-Tools/api-contract-guardian"
+Documentation = "https://github.com/Coding-Dev-Tools/api-contract-guardian#readme"
+Repository = "https://github.com/Coding-Dev-Tools/api-contract-guardian"
+Issues = "https://github.com/Coding-Dev-Tools/api-contract-guardian/issues"
+Changelog = "https://github.com/Coding-Dev-Tools/api-contract-guardian/releases"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.4.0",
+]
+
+[project.scripts]
+api-contract-guardian = "api_contract_guardian.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["*"]
+>>>>>>> Stashed changes

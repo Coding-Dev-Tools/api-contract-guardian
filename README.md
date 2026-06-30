@@ -141,3 +141,15 @@ API Contract Guardian is one of eleven tools in the Revenue Holdings suite. One 
 ## License
 
 MIT
+
+## Install
+
+```bash
+npm install
+```
+
+## Test
+
+```bash
+npm test  # runs: node --test tests/
+```

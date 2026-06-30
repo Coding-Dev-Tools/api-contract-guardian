@@ -73,6 +73,11 @@ research/
 fixtures/generated/
 .ruff_cache/
 
+<<<<<<< Updated upstream
 # Local opencode config
 .agents/
 
+=======
+# Added by release-prep
+node_modules
+>>>>>>> Stashed changes

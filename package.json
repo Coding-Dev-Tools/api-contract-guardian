@@ -41,5 +41,15 @@
   "preferGlobal": true,
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:py": "pytest",
+    "test:all": "node --test tests/*.test.js && pytest",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0"
   }
 }
