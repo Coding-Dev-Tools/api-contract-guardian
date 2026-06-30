@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: Review Baseline API
+  version: 1.0.0
+paths:
+  /users:
+    get:
+      responses:
+        "200":
+          description: List users
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          required: false
+  /users/{id}:
+    get:
+      responses:
+        "200":
+          description: Get user
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+    delete:
+      responses:
+        "204":
+          description: Deleted successfully
