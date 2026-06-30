@@ -1,22 +1,64 @@
+# Dependabot configuration for automated dependency updates
+# See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
 updates:
-  - package-ecosystem: pip
-    directory: /
+  # Python dependencies (pip)
+  - package-ecosystem: "pip"
+    directory: "/"
     schedule:
-      interval: weekly
-      day: monday
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
     open-pull-requests-limit: 5
     labels:
-      - dependencies
-      - automated
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps(pip)"
+      include: "scope"
+    reviewers:
+      - "Coding-Dev-Tools/engineers"
+    assignees:
+      - "Coding-Dev-Tools/engineers"
 
-  - package-ecosystem: github-actions
-    directory: /
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: weekly
-      day: monday
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
     open-pull-requests-limit: 5
     labels:
-      - dependencies
-      - ci
-      - automated
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "deps(actions)"
+      include: "scope"
+    reviewers:
+      - "Coding-Dev-Tools/engineers"
+    assignees:
+      - "Coding-Dev-Tools/engineers"
+
+  # npm (for package.json if present)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "deps(npm)"
+      include: "scope"
+    reviewers:
+      - "Coding-Dev-Tools/engineers"
+    assignees:
+      - "Coding-Dev-Tools/engineers"
