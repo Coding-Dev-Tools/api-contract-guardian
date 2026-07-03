@@ -1,1 +1,27 @@
-* @Coding-Dev-Tools
+# CODEOWNERS
+#
+# These users/groups will be requested for review when someone opens a PR
+# touching the matching files. See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Global defaults
+* @Coding-Dev-Tools/engineers
+
+# Core source files
+/src/ @Coding-Dev-Tools/engineers
+
+# Tests
+/tests/ @Coding-Dev-Tools/engineers
+
+# CI/CD workflows
+/.github/workflows/ @Coding-Dev-Tools/engineers
+
+# Documentation
+README.md @Coding-Dev-Tools/engineers
+CHANGELOG.md @Coding-Dev-Tools/engineers
+CONTRIBUTING.md @Coding-Dev-Tools/engineers
+CODE_OF_CONDUCT.md @Coding-Dev-Tools/engineers
+SECURITY.md @Coding-Dev-Tools/engineers
+
+# Configuration
+/pyproject.toml @Coding-Dev-Tools/engineers
+/LICENSE @Coding-Dev-Tools/engineers
