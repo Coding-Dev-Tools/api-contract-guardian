@@ -76,3 +76,5 @@ fixtures/generated/
 # Local opencode config
 .agents/
 
+# Added by release-prep
+node_modules
