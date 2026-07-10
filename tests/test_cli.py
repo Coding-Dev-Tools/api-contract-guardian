@@ -118,14 +118,13 @@ class TestMigrateCommand:
         not SPEC_V1.exists() or not SPEC_V2.exists(),
         reason="fixture spec files not present",
     )
-    def test_migrate_valid_specs(self) -> None:
-        out = REPO_ROOT / "tmp-migration.md"
-        try:
-            result = _run("migrate", str(SPEC_V1), str(SPEC_V2), "--output", str(out))
-            assert result.returncode == 0
-            assert out.exists()
-            text = out.read_text(encoding="utf-8")
-            assert "Migration Guide" in text
-        finally:
-            if out.exists():
-                out.unlink()
+    def test_migrate_valid_specs(self, tmp_path) -> None:
+        # Write to pytest's tmp_path rather than the repo root: writing and
+        # unlinking an artifact inside the repo pollutes the working tree and
+        # fails outright on filesystems where deletion is not permitted.
+        out = tmp_path / "tmp-migration.md"
+        result = _run("migrate", str(SPEC_V1), str(SPEC_V2), "--output", str(out))
+        assert result.returncode == 0
+        assert out.exists()
+        text = out.read_text(encoding="utf-8")
+        assert "Migration Guide" in text

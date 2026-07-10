@@ -22,7 +22,9 @@ const python = spawn('python', ['-m', 'api_contract_guardian', ...process.argv.s
 });
 
 python.on('close', (code) => {
-  process.exit(code || 0);
+  // code is null when the child was killed by a signal — treat as failure,
+  // not success (code || 0 would report exit 0 to CI).
+  process.exit(code === null ? 1 : code);
 });
 
 python.on('error', (err) => {

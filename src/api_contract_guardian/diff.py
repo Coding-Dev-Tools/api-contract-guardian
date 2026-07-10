@@ -323,13 +323,11 @@ def _diff_parameters(
     """Detect parameter changes."""
     old_by_key = {}
     for p in old_params:
-        key = (p.get("in", ""), p.get("name", ""))
-        old_by_key[key] = p
+        old_by_key[_param_key(p)] = p
 
     new_by_key = {}
     for p in new_params:
-        key = (p.get("in", ""), p.get("name", ""))
-        new_by_key[key] = p
+        new_by_key[_param_key(p)] = p
 
     # Removed parameters
     for key, param in old_by_key.items():

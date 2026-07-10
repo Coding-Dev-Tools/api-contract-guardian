@@ -116,6 +116,9 @@ def validate_openapi_version(spec: dict[str, Any]) -> str:
         raise SpecLoadError(
             "Spec does not contain 'openapi' or 'swagger' version field"
         )
+    # YAML parses an unquoted `openapi: 3.1` as a float; normalize to str so
+    # .startswith below raises SpecLoadError instead of AttributeError.
+    version = str(version)
 
     if version.startswith("3."):
         return version

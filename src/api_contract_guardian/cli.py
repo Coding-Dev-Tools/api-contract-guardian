@@ -40,10 +40,12 @@ def _require_license(tool_name: str) -> None:
         require_license(tool_name)
     except ImportError:
         if _require_license_strict:
-            _get_console().print(
+            from rich.console import Console
+
+            # rich's Console.print has no ``err=`` kwarg; use a stderr console.
+            Console(stderr=True).print(
                 "[bold red]Error:[/bold red] revenueholdings-license is not installed. "
                 "Install it with: pip install revenueholdings-license",
-                err=True,
             )
             raise typer.Exit(code=1) from None
     except Exception:
