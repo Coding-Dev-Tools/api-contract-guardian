@@ -6,6 +6,7 @@ All notable changes to API Contract Guardian will be documented in this file.
 
 ### Added
 
+- Operation-level (per-endpoint) `security` diffing: detects when an endpoint drops its auth requirement (becomes public), newly requires authentication, or switches security schemes — surfaced as DANGEROUS changes (previously only global `security` was compared)
 - MCP server integration via `mcp` subcommand (#6)
 - GitHub Pages deployment workflow (`pages.yml`)
 - npm-publish workflow for npm publishing

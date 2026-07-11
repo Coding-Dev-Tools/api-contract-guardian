@@ -1130,3 +1130,112 @@ class TestDiffIntegration:
         )
         result = diff_specs(old, new)
         assert not result.has_breaking
+
+
+# ── Operation-level (per-endpoint) security diff tests ──
+
+
+def _op(security=None, extra=None):
+    """Build a minimal operation object, optionally with a `security` key."""
+    op = {"responses": {"200": {"description": "OK"}}}
+    if security is not None:
+        op["security"] = security
+    if extra:
+        op.update(extra)
+    return op
+
+
+class TestOperationSecurityDiff:
+    def test_operation_security_added_when_previously_inherited(self):
+        old = _make_spec(paths={"/things": {"get": _op()}})
+        new = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_added"]
+        assert matches, "expected operation_security_added"
+        assert matches[0].severity == Severity.DANGEROUS
+        assert matches[0].path == "paths./things.get.security"
+
+    def test_operation_security_removed_when_key_dropped(self):
+        old = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        new = _make_spec(paths={"/things": {"get": _op()}})
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_removed"]
+        assert matches, "expected operation_security_removed"
+        assert matches[0].severity == Severity.DANGEROUS
+
+    def test_operation_became_public_is_flagged(self):
+        old = _make_spec(
+            paths={"/admin": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        new = _make_spec(paths={"/admin": {"get": _op(security=[])}})
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_removed"]
+        assert matches, "endpoint dropping all auth must be flagged"
+        assert "no longer requires authentication" in matches[0].description
+
+    def test_public_operation_now_requires_auth(self):
+        old = _make_spec(paths={"/admin": {"get": _op(security=[])}})
+        new = _make_spec(
+            paths={"/admin": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_added"]
+        assert matches, "expected operation_security_added"
+        assert "previously public" in matches[0].description
+
+    def test_operation_security_scheme_changed(self):
+        old = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        new = _make_spec(
+            paths={"/things": {"get": _op(security=[{"apiKeyAuth": []}])}}
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_changed"]
+        assert matches, "expected operation_security_changed"
+        assert matches[0].severity == Severity.DANGEROUS
+
+    def test_identical_operation_security_is_no_change(self):
+        old = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        new = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        result = diff_specs(old, new)
+        assert not any(
+            c.kind.startswith("operation_security_") for c in result.changes
+        )
+
+    def test_requirement_order_and_scope_order_ignored(self):
+        # Same scheme groups, different requirement ordering -> no spurious diff.
+        old = _make_spec(
+            paths={
+                "/things": {
+                    "get": _op(security=[{"a": []}, {"b": ["read", "write"]}])
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/things": {
+                    "get": _op(security=[{"b": ["write", "read"]}, {"a": []}])
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        assert not any(
+            c.kind.startswith("operation_security_") for c in result.changes
+        )
+
+    def test_both_inherit_global_no_operation_security_change(self):
+        old = _make_spec(paths={"/things": {"get": _op()}})
+        new = _make_spec(paths={"/things": {"get": _op(extra={"summary": "x"})}})
+        result = diff_specs(old, new)
+        assert not any(
+            c.kind.startswith("operation_security_") for c in result.changes
+        )

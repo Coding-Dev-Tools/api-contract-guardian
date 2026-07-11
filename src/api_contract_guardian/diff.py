@@ -262,6 +262,9 @@ def _diff_operation_details(
         op_path, old_op.get("responses", {}), new_op.get("responses", {}), result
     )
 
+    # Check operation-level (per-endpoint) security requirements
+    _diff_operation_security(op_path, path, method, old_op, new_op, result)
+
     # Check if operation became deprecated
     if not old_op.get("deprecated") and new_op.get("deprecated"):
         result.changes.append(
@@ -765,6 +768,156 @@ def _diff_security_schemes(
                     new_value=new_schemes[name].get("type"),
                 )
             )
+
+
+def _security_requirement_groups(security: list[Any]) -> set[frozenset[str]]:
+    """Normalize an OpenAPI ``security`` list into a set of scheme-name groups.
+
+    Each entry in ``security`` is a requirement object mapping a security
+    scheme name to its required scopes; the list has OR semantics (satisfying
+    any one entry authorizes the request). We reduce each requirement object to
+    the ``frozenset`` of its scheme names so that requirement ordering and scope
+    ordering never produce spurious diffs, while still detecting when whole
+    scheme groups are added or removed. (Scope-level tightening within an
+    existing scheme group is intentionally out of scope for this pass.)
+    """
+    groups: set[frozenset[str]] = set()
+    for req in security:
+        if isinstance(req, dict):
+            groups.add(frozenset(req.keys()))
+    return groups
+
+
+def _format_security_groups(groups: set[frozenset[str]]) -> str:
+    """Render security scheme groups as a human-readable 'A OR B+C' string."""
+    rendered = [
+        "+".join(sorted(group)) if group else "(anonymous)"
+        for group in sorted(groups, key=lambda g: sorted(g))
+    ]
+    return " OR ".join(rendered) if rendered else "(none)"
+
+
+def _diff_operation_security(
+    op_path: str,
+    path: str,
+    method: str,
+    old_op: dict[str, Any],
+    new_op: dict[str, Any],
+    result: DiffResult,
+) -> None:
+    """Detect changes to an operation's own ``security`` requirement.
+
+    Operation-level ``security`` overrides the global requirement; an absent
+    key means the operation inherits the global security. Silently shipping a
+    change here (e.g. dropping auth from an endpoint, or requiring a new
+    scheme) is a security-relevant contract change, so surface each transition
+    as a DANGEROUS change — mirroring how global security changes are treated.
+    """
+    old_has = "security" in old_op
+    new_has = "security" in new_op
+    if not old_has and not new_has:
+        # Both inherit the global requirement; nothing operation-specific.
+        return
+
+    sec_path = f"{op_path}.security"
+    label = f"{method.upper()} {path}"
+    old_groups = _security_requirement_groups(old_op.get("security") or [])
+    new_groups = _security_requirement_groups(new_op.get("security") or [])
+
+    if not old_has and new_has:
+        if new_groups:
+            desc = (
+                f"{label} now declares operation-level security "
+                f"({_format_security_groups(new_groups)}); clients may need new "
+                "credentials"
+            )
+        else:
+            desc = (
+                f"{label} now explicitly requires no authentication "
+                "(security: []), overriding the global security requirement"
+            )
+        result.changes.append(
+            Change(
+                kind="operation_security_added",
+                severity=Severity.DANGEROUS,
+                path=sec_path,
+                description=desc,
+                old_value=None,
+                new_value=[sorted(g) for g in new_groups],
+            )
+        )
+        return
+
+    if old_has and not new_has:
+        result.changes.append(
+            Change(
+                kind="operation_security_removed",
+                severity=Severity.DANGEROUS,
+                path=sec_path,
+                description=(
+                    f"{label} dropped its operation-level security; it now "
+                    "inherits the global security requirement"
+                ),
+                old_value=[sorted(g) for g in old_groups],
+                new_value=None,
+            )
+        )
+        return
+
+    # Both sides declare security explicitly — compare the requirement groups.
+    if old_groups == new_groups:
+        return
+
+    if old_groups and not new_groups:
+        result.changes.append(
+            Change(
+                kind="operation_security_removed",
+                severity=Severity.DANGEROUS,
+                path=sec_path,
+                description=(
+                    f"{label} no longer requires authentication (security: []); "
+                    "it was previously protected"
+                ),
+                old_value=[sorted(g) for g in old_groups],
+                new_value=[],
+            )
+        )
+        return
+
+    if new_groups and not old_groups:
+        result.changes.append(
+            Change(
+                kind="operation_security_added",
+                severity=Severity.DANGEROUS,
+                path=sec_path,
+                description=(
+                    f"{label} now requires authentication "
+                    f"({_format_security_groups(new_groups)}); it was previously "
+                    "public"
+                ),
+                old_value=[],
+                new_value=[sorted(g) for g in new_groups],
+            )
+        )
+        return
+
+    added = new_groups - old_groups
+    removed = old_groups - new_groups
+    parts = []
+    if added:
+        parts.append(f"added {_format_security_groups(added)}")
+    if removed:
+        parts.append(f"removed {_format_security_groups(removed)}")
+    result.changes.append(
+        Change(
+            kind="operation_security_changed",
+            severity=Severity.DANGEROUS,
+            path=sec_path,
+            description=f"{label} security requirements changed: {'; '.join(parts)}",
+            old_value=[sorted(g) for g in old_groups],
+            new_value=[sorted(g) for g in new_groups],
+        )
+    )
 
 
 def _diff_security_requirements(
