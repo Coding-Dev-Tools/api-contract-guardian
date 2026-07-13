@@ -1576,3 +1576,181 @@ class TestMediaTypeSchemaDiff:
             "response_property_no_longer_required",
         }
         assert not any(c.kind in schema_kinds for c in result.changes)
+
+    def test_nested_object_response_property_removed_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "address": {
+                                    "type": "object",
+                                    "properties": {
+                                        "street": {"type": "string"},
+                                        "city": {"type": "string"},
+                                    },
+                                },
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "address": {
+                                    "type": "object",
+                                    "properties": {"street": {"type": "string"}},
+                                },
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "response_property_removed"]
+        assert matches, "dropping a nested response field must be flagged"
+        assert matches[0].severity == Severity.BREAKING
+        assert "address.properties.city" in matches[0].path
+
+    def test_nested_object_request_new_required_field_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {
+                                "profile": {
+                                    "type": "object",
+                                    "properties": {"name": {"type": "string"}},
+                                }
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {
+                                "profile": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "bio": {"type": "string"},
+                                    },
+                                    "required": ["name", "bio"],
+                                }
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "request_property_added"]
+        assert matches, "adding a required nested request field must be flagged"
+        assert matches[0].severity == Severity.BREAKING
+        assert "profile.properties.bio" in matches[0].path
+        assert "(required)" in matches[0].description
+
+    def test_nested_array_item_property_removed_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "sku": {"type": "string"},
+                                            "qty": {"type": "integer"},
+                                        },
+                                    },
+                                }
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {"qty": {"type": "integer"}},
+                                    },
+                                }
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "response_property_removed"]
+        assert matches, "dropping a field inside an array-of-objects must be flagged"
+        assert matches[0].severity == Severity.BREAKING
+        assert "items.items.properties.sku" in matches[0].path
+
+    def test_identical_nested_schemas_no_change(self):
+        schema = {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "address": {
+                    "type": "object",
+                    "properties": {"city": {"type": "string"}},
+                    "required": ["city"],
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {"sku": {"type": "string"}},
+                    },
+                },
+            },
+        }
+        old = _make_spec(
+            paths={"/u": {"post": _op_body(request_schema=schema, response_schema=schema)}}
+        )
+        new = _make_spec(
+            paths={"/u": {"post": _op_body(request_schema=schema, response_schema=schema)}}
+        )
+        result = diff_specs(old, new)
+        nested_kinds = {
+            "schema_type_changed",
+            "property_type_changed",
+            "request_property_added",
+            "response_property_removed",
+            "request_property_became_required",
+            "response_property_no_longer_required",
+        }
+        assert not any(c.kind in nested_kinds for c in result.changes)

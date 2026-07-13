@@ -618,6 +618,7 @@ def _diff_inline_schema(
     result: DiffResult,
     *,
     is_request: bool,
+    depth: int = 0,
 ) -> None:
     """Diff two inline schemas with request/response-aware breaking semantics.
 
@@ -740,6 +741,63 @@ def _diff_inline_schema(
                     new_value=new_pt,
                 )
             )
+
+    # Recurse into nested object properties and array-of-object item schemas so
+    # breaking changes buried inside a nested object/array are not reported as
+    # "no change" (the silent-green failure class this tool exists to catch).
+    # Component-level $ref targets are diffed by _diff_schemas, so a nested $ref
+    # property is intentionally NOT recursed here.
+    _MAX_SCHEMA_DEPTH = 6
+    if depth < _MAX_SCHEMA_DEPTH:
+        for prop_name in old_props:
+            if prop_name not in new_props:
+                continue
+            old_prop = old_props[prop_name] or {}
+            new_prop = new_props[prop_name] or {}
+            if not isinstance(old_prop, dict) or not isinstance(new_prop, dict):
+                continue
+            # Nested object -> recurse into its own properties/required set.
+            both_object = (
+                old_prop.get("type") == "object" and new_prop.get("type") == "object"
+            ) or ("properties" in old_prop and "properties" in new_prop)
+            if both_object:
+                _diff_inline_schema(
+                    f"{path}.properties.{prop_name}",
+                    old_prop,
+                    new_prop,
+                    result,
+                    is_request=is_request,
+                    depth=depth + 1,
+                )
+                continue
+            # Array whose items are an object -> recurse into the item schema.
+            if (
+                old_prop.get("type") == "array"
+                and new_prop.get("type") == "array"
+            ):
+                old_items = old_prop.get("items") or {}
+                new_items = new_prop.get("items") or {}
+                if (
+                    isinstance(old_items, dict)
+                    and isinstance(new_items, dict)
+                    and (
+                        (
+                            old_items.get("type") == "object"
+                            and new_items.get("type") == "object"
+                        )
+                        or (
+                            "properties" in old_items and "properties" in new_items
+                        )
+                    )
+                ):
+                    _diff_inline_schema(
+                        f"{path}.properties.{prop_name}.items",
+                        old_items,
+                        new_items,
+                        result,
+                        is_request=is_request,
+                        depth=depth + 1,
+                    )
 
 
 def _diff_schemas(old: dict[str, Any], new: dict[str, Any], result: DiffResult) -> None:
