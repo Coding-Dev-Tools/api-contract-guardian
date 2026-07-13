@@ -476,6 +476,21 @@ def _diff_request_body(
                 )
             )
 
+    # Schema-level changes within a content type that exists in both specs.
+    # Previously only content-type presence was compared, so an inline request
+    # schema that added a required field or changed a property type slipped
+    # through silently (the diff reported no change while clients broke).
+    for ct in old_content:
+        if ct not in new_content:
+            continue
+        _diff_media_type_schema(
+            f"{rb_path}.content.{ct}",
+            old_content.get(ct) or {},
+            new_content.get(ct) or {},
+            result,
+            is_request=True,
+        )
+
 
 def _diff_responses(
     op_path: str,
@@ -535,6 +550,196 @@ def _diff_responses(
                         description=f"Response content type '{ct}' for '{code}' was added",
                     )
                 )
+
+        # Schema-level changes within a response content type present in both.
+        # A response schema that drops a property or narrows a type is breaking
+        # for consumers; previously only content-type presence was compared, so
+        # these changes were reported as no-change (silent green while broken).
+        for ct in old_content:
+            if ct not in new_content:
+                continue
+            _diff_media_type_schema(
+                f"{resp_path}.{code}.content.{ct}",
+                old_content.get(ct) or {},
+                new_content.get(ct) or {},
+                result,
+                is_request=False,
+            )
+
+
+def _diff_media_type_schema(
+    path: str,
+    old_media: dict[str, Any],
+    new_media: dict[str, Any],
+    result: DiffResult,
+    *,
+    is_request: bool,
+) -> None:
+    """Diff the schema of a single media type (content-type) present in both specs.
+
+    Only inline schemas are compared here. When both sides reference a component
+    schema via ``$ref``, the referenced schema is diffed by ``_diff_schemas`` and
+    re-diffing it here would double-report; instead we only flag a changed
+    ``$ref`` target. Severity is direction-aware: adding a required field breaks
+    request bodies, while dropping a field breaks responses.
+    """
+    old_schema = old_media.get("schema") if isinstance(old_media, dict) else None
+    new_schema = new_media.get("schema") if isinstance(new_media, dict) else None
+    if not isinstance(old_schema, dict) or not isinstance(new_schema, dict):
+        return
+
+    old_ref = old_schema.get("$ref")
+    new_ref = new_schema.get("$ref")
+    if old_ref or new_ref:
+        if old_ref != new_ref:
+            result.changes.append(
+                Change(
+                    kind="schema_ref_changed",
+                    severity=Severity.DANGEROUS,
+                    path=f"{path}.schema",
+                    description=(
+                        f"Schema reference changed from '{old_ref}' to '{new_ref}'"
+                    ),
+                    old_value=old_ref,
+                    new_value=new_ref,
+                )
+            )
+        # Both sides are (possibly different) refs; component-level detail diffing
+        # is owned by _diff_schemas. Nothing more to compare inline.
+        return
+
+    _diff_inline_schema(f"{path}.schema", old_schema, new_schema, result, is_request=is_request)
+
+
+def _diff_inline_schema(
+    path: str,
+    old_schema: dict[str, Any],
+    new_schema: dict[str, Any],
+    result: DiffResult,
+    *,
+    is_request: bool,
+) -> None:
+    """Diff two inline schemas with request/response-aware breaking semantics.
+
+    Request bodies and responses invert what counts as breaking:
+    - request: a new required field or a field becoming required breaks clients;
+      removing a field is tolerable.
+    - response: removing a field or a field ceasing to be guaranteed breaks
+      consumers; adding a field is tolerable.
+    A ``type`` change is breaking in either direction.
+    """
+    ctx = "request" if is_request else "response"
+
+    # Top-level type change (e.g. object -> array) breaks both directions.
+    old_type = old_schema.get("type")
+    new_type = new_schema.get("type")
+    if old_type and new_type and old_type != new_type:
+        result.changes.append(
+            Change(
+                kind="schema_type_changed",
+                severity=Severity.BREAKING,
+                path=path,
+                description=f"{ctx.capitalize()} schema type changed from '{old_type}' to '{new_type}'",
+                old_value=old_type,
+                new_value=new_type,
+            )
+        )
+
+    old_required = set(old_schema.get("required", []))
+    new_required = set(new_schema.get("required", []))
+    old_props = old_schema.get("properties", {}) or {}
+    new_props = new_schema.get("properties", {}) or {}
+
+    # Required-set changes.
+    newly_required = new_required - old_required
+    for prop in sorted(newly_required):
+        result.changes.append(
+            Change(
+                kind="request_property_became_required"
+                if is_request
+                else "response_property_became_required",
+                severity=Severity.BREAKING if is_request else Severity.NON_BREAKING,
+                path=f"{path}.{prop}",
+                description=(
+                    f"Property '{prop}' became required in {ctx} schema"
+                    + ("" if is_request else " (now always present)")
+                ),
+            )
+        )
+
+    no_longer_required = old_required - new_required
+    for prop in sorted(no_longer_required):
+        result.changes.append(
+            Change(
+                kind="response_property_no_longer_required"
+                if not is_request
+                else "request_property_no_longer_required",
+                # A response field no longer guaranteed breaks consumers relying on it.
+                severity=Severity.BREAKING if not is_request else Severity.NON_BREAKING,
+                path=f"{path}.{prop}",
+                description=f"Property '{prop}' is no longer required in {ctx} schema",
+            )
+        )
+
+    # Property presence changes.
+    for prop_name in old_props:
+        if prop_name in new_props:
+            continue
+        # Removing a field breaks response consumers; for requests it is tolerable.
+        result.changes.append(
+            Change(
+                kind="response_property_removed"
+                if not is_request
+                else "request_property_removed",
+                severity=Severity.BREAKING if not is_request else Severity.NON_BREAKING,
+                path=f"{path}.properties.{prop_name}",
+                description=f"Property '{prop_name}' removed from {ctx} schema",
+            )
+        )
+
+    for prop_name in new_props:
+        if prop_name in old_props:
+            continue
+        # Adding a required field breaks request clients; otherwise tolerable.
+        added_required = prop_name in new_required and is_request
+        result.changes.append(
+            Change(
+                kind="request_property_added"
+                if is_request
+                else "response_property_added",
+                severity=Severity.BREAKING if added_required else Severity.NON_BREAKING,
+                path=f"{path}.properties.{prop_name}",
+                description=(
+                    f"Property '{prop_name}' added to {ctx} schema"
+                    + (" (required)" if added_required else "")
+                ),
+            )
+        )
+
+    # Property type changes on shared properties (breaking either direction).
+    for prop_name in old_props:
+        if prop_name not in new_props:
+            continue
+        old_prop = old_props[prop_name] or {}
+        new_prop = new_props[prop_name] or {}
+        if not isinstance(old_prop, dict) or not isinstance(new_prop, dict):
+            continue
+        old_pt = old_prop.get("type")
+        new_pt = new_prop.get("type")
+        if old_pt and new_pt and old_pt != new_pt:
+            result.changes.append(
+                Change(
+                    kind="property_type_changed",
+                    severity=Severity.BREAKING,
+                    path=f"{path}.properties.{prop_name}",
+                    description=(
+                        f"Property '{prop_name}' in {ctx} schema type changed"
+                        f" from '{old_pt}' to '{new_pt}'"
+                    ),
+                    old_value=old_pt,
+                    new_value=new_pt,
+                )
+            )
 
 
 def _diff_schemas(old: dict[str, Any], new: dict[str, Any], result: DiffResult) -> None:
