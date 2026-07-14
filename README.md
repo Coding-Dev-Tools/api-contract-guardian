@@ -96,6 +96,7 @@ api-contract-guardian migrate spec-v1.yaml spec-v2.yaml --format json --output M
 | Required property added | `phone` now required in `User` |
 | Renamed field | `name` renamed to `fullName` |
 | Response format changed | `200` response type changed |
+| Endpoint auth changed | `security` dropped from `DELETE /admin` (now public) or a new scheme required |
 
 ## CI/CD Integration
 

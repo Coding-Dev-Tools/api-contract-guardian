@@ -262,6 +262,9 @@ def _diff_operation_details(
         op_path, old_op.get("responses", {}), new_op.get("responses", {}), result
     )
 
+    # Check operation-level (per-endpoint) security requirements
+    _diff_operation_security(op_path, path, method, old_op, new_op, result)
+
     # Check if operation became deprecated
     if not old_op.get("deprecated") and new_op.get("deprecated"):
         result.changes.append(
@@ -473,6 +476,21 @@ def _diff_request_body(
                 )
             )
 
+    # Schema-level changes within a content type that exists in both specs.
+    # Previously only content-type presence was compared, so an inline request
+    # schema that added a required field or changed a property type slipped
+    # through silently (the diff reported no change while clients broke).
+    for ct in old_content:
+        if ct not in new_content:
+            continue
+        _diff_media_type_schema(
+            f"{rb_path}.content.{ct}",
+            old_content.get(ct) or {},
+            new_content.get(ct) or {},
+            result,
+            is_request=True,
+        )
+
 
 def _diff_responses(
     op_path: str,
@@ -532,6 +550,254 @@ def _diff_responses(
                         description=f"Response content type '{ct}' for '{code}' was added",
                     )
                 )
+
+        # Schema-level changes within a response content type present in both.
+        # A response schema that drops a property or narrows a type is breaking
+        # for consumers; previously only content-type presence was compared, so
+        # these changes were reported as no-change (silent green while broken).
+        for ct in old_content:
+            if ct not in new_content:
+                continue
+            _diff_media_type_schema(
+                f"{resp_path}.{code}.content.{ct}",
+                old_content.get(ct) or {},
+                new_content.get(ct) or {},
+                result,
+                is_request=False,
+            )
+
+
+def _diff_media_type_schema(
+    path: str,
+    old_media: dict[str, Any],
+    new_media: dict[str, Any],
+    result: DiffResult,
+    *,
+    is_request: bool,
+) -> None:
+    """Diff the schema of a single media type (content-type) present in both specs.
+
+    Only inline schemas are compared here. When both sides reference a component
+    schema via ``$ref``, the referenced schema is diffed by ``_diff_schemas`` and
+    re-diffing it here would double-report; instead we only flag a changed
+    ``$ref`` target. Severity is direction-aware: adding a required field breaks
+    request bodies, while dropping a field breaks responses.
+    """
+    old_schema = old_media.get("schema") if isinstance(old_media, dict) else None
+    new_schema = new_media.get("schema") if isinstance(new_media, dict) else None
+    if not isinstance(old_schema, dict) or not isinstance(new_schema, dict):
+        return
+
+    old_ref = old_schema.get("$ref")
+    new_ref = new_schema.get("$ref")
+    if old_ref or new_ref:
+        if old_ref != new_ref:
+            result.changes.append(
+                Change(
+                    kind="schema_ref_changed",
+                    severity=Severity.DANGEROUS,
+                    path=f"{path}.schema",
+                    description=(
+                        f"Schema reference changed from '{old_ref}' to '{new_ref}'"
+                    ),
+                    old_value=old_ref,
+                    new_value=new_ref,
+                )
+            )
+        # Both sides are (possibly different) refs; component-level detail diffing
+        # is owned by _diff_schemas. Nothing more to compare inline.
+        return
+
+    _diff_inline_schema(f"{path}.schema", old_schema, new_schema, result, is_request=is_request)
+
+
+def _diff_inline_schema(
+    path: str,
+    old_schema: dict[str, Any],
+    new_schema: dict[str, Any],
+    result: DiffResult,
+    *,
+    is_request: bool,
+    depth: int = 0,
+) -> None:
+    """Diff two inline schemas with request/response-aware breaking semantics.
+
+    Request bodies and responses invert what counts as breaking:
+    - request: a new required field or a field becoming required breaks clients;
+      removing a field is tolerable.
+    - response: removing a field or a field ceasing to be guaranteed breaks
+      consumers; adding a field is tolerable.
+    A ``type`` change is breaking in either direction.
+    """
+    ctx = "request" if is_request else "response"
+
+    # Top-level type change (e.g. object -> array) breaks both directions.
+    old_type = old_schema.get("type")
+    new_type = new_schema.get("type")
+    if old_type and new_type and old_type != new_type:
+        result.changes.append(
+            Change(
+                kind="schema_type_changed",
+                severity=Severity.BREAKING,
+                path=path,
+                description=f"{ctx.capitalize()} schema type changed from '{old_type}' to '{new_type}'",
+                old_value=old_type,
+                new_value=new_type,
+            )
+        )
+
+    old_required = set(old_schema.get("required", []))
+    new_required = set(new_schema.get("required", []))
+    old_props = old_schema.get("properties", {}) or {}
+    new_props = new_schema.get("properties", {}) or {}
+
+    # Required-set changes.
+    newly_required = new_required - old_required
+    for prop in sorted(newly_required):
+        result.changes.append(
+            Change(
+                kind="request_property_became_required"
+                if is_request
+                else "response_property_became_required",
+                severity=Severity.BREAKING if is_request else Severity.NON_BREAKING,
+                path=f"{path}.{prop}",
+                description=(
+                    f"Property '{prop}' became required in {ctx} schema"
+                    + ("" if is_request else " (now always present)")
+                ),
+            )
+        )
+
+    no_longer_required = old_required - new_required
+    for prop in sorted(no_longer_required):
+        result.changes.append(
+            Change(
+                kind="response_property_no_longer_required"
+                if not is_request
+                else "request_property_no_longer_required",
+                # A response field no longer guaranteed breaks consumers relying on it.
+                severity=Severity.BREAKING if not is_request else Severity.NON_BREAKING,
+                path=f"{path}.{prop}",
+                description=f"Property '{prop}' is no longer required in {ctx} schema",
+            )
+        )
+
+    # Property presence changes.
+    for prop_name in old_props:
+        if prop_name in new_props:
+            continue
+        # Removing a field breaks response consumers; for requests it is tolerable.
+        result.changes.append(
+            Change(
+                kind="response_property_removed"
+                if not is_request
+                else "request_property_removed",
+                severity=Severity.BREAKING if not is_request else Severity.NON_BREAKING,
+                path=f"{path}.properties.{prop_name}",
+                description=f"Property '{prop_name}' removed from {ctx} schema",
+            )
+        )
+
+    for prop_name in new_props:
+        if prop_name in old_props:
+            continue
+        # Adding a required field breaks request clients; otherwise tolerable.
+        added_required = prop_name in new_required and is_request
+        result.changes.append(
+            Change(
+                kind="request_property_added"
+                if is_request
+                else "response_property_added",
+                severity=Severity.BREAKING if added_required else Severity.NON_BREAKING,
+                path=f"{path}.properties.{prop_name}",
+                description=(
+                    f"Property '{prop_name}' added to {ctx} schema"
+                    + (" (required)" if added_required else "")
+                ),
+            )
+        )
+
+    # Property type changes on shared properties (breaking either direction).
+    for prop_name in old_props:
+        if prop_name not in new_props:
+            continue
+        old_prop = old_props[prop_name] or {}
+        new_prop = new_props[prop_name] or {}
+        if not isinstance(old_prop, dict) or not isinstance(new_prop, dict):
+            continue
+        old_pt = old_prop.get("type")
+        new_pt = new_prop.get("type")
+        if old_pt and new_pt and old_pt != new_pt:
+            result.changes.append(
+                Change(
+                    kind="property_type_changed",
+                    severity=Severity.BREAKING,
+                    path=f"{path}.properties.{prop_name}",
+                    description=(
+                        f"Property '{prop_name}' in {ctx} schema type changed"
+                        f" from '{old_pt}' to '{new_pt}'"
+                    ),
+                    old_value=old_pt,
+                    new_value=new_pt,
+                )
+            )
+
+    # Recurse into nested object properties and array-of-object item schemas so
+    # breaking changes buried inside a nested object/array are not reported as
+    # "no change" (the silent-green failure class this tool exists to catch).
+    # Component-level $ref targets are diffed by _diff_schemas, so a nested $ref
+    # property is intentionally NOT recursed here.
+    _MAX_SCHEMA_DEPTH = 6
+    if depth < _MAX_SCHEMA_DEPTH:
+        for prop_name in old_props:
+            if prop_name not in new_props:
+                continue
+            old_prop = old_props[prop_name] or {}
+            new_prop = new_props[prop_name] or {}
+            if not isinstance(old_prop, dict) or not isinstance(new_prop, dict):
+                continue
+            # Nested object -> recurse into its own properties/required set.
+            both_object = (
+                old_prop.get("type") == "object" and new_prop.get("type") == "object"
+            ) or ("properties" in old_prop and "properties" in new_prop)
+            if both_object:
+                _diff_inline_schema(
+                    f"{path}.properties.{prop_name}",
+                    old_prop,
+                    new_prop,
+                    result,
+                    is_request=is_request,
+                    depth=depth + 1,
+                )
+                continue
+            # Array whose items are an object -> recurse into the item schema.
+            if (
+                old_prop.get("type") == "array"
+                and new_prop.get("type") == "array"
+            ):
+                old_items = old_prop.get("items") or {}
+                new_items = new_prop.get("items") or {}
+                if (
+                    isinstance(old_items, dict)
+                    and isinstance(new_items, dict)
+                    and (
+                        (
+                            old_items.get("type") == "object"
+                            and new_items.get("type") == "object"
+                        )
+                        or (
+                            "properties" in old_items and "properties" in new_items
+                        )
+                    )
+                ):
+                    _diff_inline_schema(
+                        f"{path}.properties.{prop_name}.items",
+                        old_items,
+                        new_items,
+                        result,
+                        is_request=is_request,
+                        depth=depth + 1,
+                    )
 
 
 def _diff_schemas(old: dict[str, Any], new: dict[str, Any], result: DiffResult) -> None:
@@ -765,6 +1031,156 @@ def _diff_security_schemes(
                     new_value=new_schemes[name].get("type"),
                 )
             )
+
+
+def _security_requirement_groups(security: list[Any]) -> set[frozenset[str]]:
+    """Normalize an OpenAPI ``security`` list into a set of scheme-name groups.
+
+    Each entry in ``security`` is a requirement object mapping a security
+    scheme name to its required scopes; the list has OR semantics (satisfying
+    any one entry authorizes the request). We reduce each requirement object to
+    the ``frozenset`` of its scheme names so that requirement ordering and scope
+    ordering never produce spurious diffs, while still detecting when whole
+    scheme groups are added or removed. (Scope-level tightening within an
+    existing scheme group is intentionally out of scope for this pass.)
+    """
+    groups: set[frozenset[str]] = set()
+    for req in security:
+        if isinstance(req, dict):
+            groups.add(frozenset(req.keys()))
+    return groups
+
+
+def _format_security_groups(groups: set[frozenset[str]]) -> str:
+    """Render security scheme groups as a human-readable 'A OR B+C' string."""
+    rendered = [
+        "+".join(sorted(group)) if group else "(anonymous)"
+        for group in sorted(groups, key=lambda g: sorted(g))
+    ]
+    return " OR ".join(rendered) if rendered else "(none)"
+
+
+def _diff_operation_security(
+    op_path: str,
+    path: str,
+    method: str,
+    old_op: dict[str, Any],
+    new_op: dict[str, Any],
+    result: DiffResult,
+) -> None:
+    """Detect changes to an operation's own ``security`` requirement.
+
+    Operation-level ``security`` overrides the global requirement; an absent
+    key means the operation inherits the global security. Silently shipping a
+    change here (e.g. dropping auth from an endpoint, or requiring a new
+    scheme) is a security-relevant contract change, so surface each transition
+    as a DANGEROUS change — mirroring how global security changes are treated.
+    """
+    old_has = "security" in old_op
+    new_has = "security" in new_op
+    if not old_has and not new_has:
+        # Both inherit the global requirement; nothing operation-specific.
+        return
+
+    sec_path = f"{op_path}.security"
+    label = f"{method.upper()} {path}"
+    old_groups = _security_requirement_groups(old_op.get("security") or [])
+    new_groups = _security_requirement_groups(new_op.get("security") or [])
+
+    if not old_has and new_has:
+        if new_groups:
+            desc = (
+                f"{label} now declares operation-level security "
+                f"({_format_security_groups(new_groups)}); clients may need new "
+                "credentials"
+            )
+        else:
+            desc = (
+                f"{label} now explicitly requires no authentication "
+                "(security: []), overriding the global security requirement"
+            )
+        result.changes.append(
+            Change(
+                kind="operation_security_added",
+                severity=Severity.DANGEROUS,
+                path=sec_path,
+                description=desc,
+                old_value=None,
+                new_value=[sorted(g) for g in new_groups],
+            )
+        )
+        return
+
+    if old_has and not new_has:
+        result.changes.append(
+            Change(
+                kind="operation_security_removed",
+                severity=Severity.DANGEROUS,
+                path=sec_path,
+                description=(
+                    f"{label} dropped its operation-level security; it now "
+                    "inherits the global security requirement"
+                ),
+                old_value=[sorted(g) for g in old_groups],
+                new_value=None,
+            )
+        )
+        return
+
+    # Both sides declare security explicitly — compare the requirement groups.
+    if old_groups == new_groups:
+        return
+
+    if old_groups and not new_groups:
+        result.changes.append(
+            Change(
+                kind="operation_security_removed",
+                severity=Severity.DANGEROUS,
+                path=sec_path,
+                description=(
+                    f"{label} no longer requires authentication (security: []); "
+                    "it was previously protected"
+                ),
+                old_value=[sorted(g) for g in old_groups],
+                new_value=[],
+            )
+        )
+        return
+
+    if new_groups and not old_groups:
+        result.changes.append(
+            Change(
+                kind="operation_security_added",
+                severity=Severity.DANGEROUS,
+                path=sec_path,
+                description=(
+                    f"{label} now requires authentication "
+                    f"({_format_security_groups(new_groups)}); it was previously "
+                    "public"
+                ),
+                old_value=[],
+                new_value=[sorted(g) for g in new_groups],
+            )
+        )
+        return
+
+    added = new_groups - old_groups
+    removed = old_groups - new_groups
+    parts = []
+    if added:
+        parts.append(f"added {_format_security_groups(added)}")
+    if removed:
+        parts.append(f"removed {_format_security_groups(removed)}")
+    result.changes.append(
+        Change(
+            kind="operation_security_changed",
+            severity=Severity.DANGEROUS,
+            path=sec_path,
+            description=f"{label} security requirements changed: {'; '.join(parts)}",
+            old_value=[sorted(g) for g in old_groups],
+            new_value=[sorted(g) for g in new_groups],
+        )
+    )
 
 
 def _diff_security_requirements(

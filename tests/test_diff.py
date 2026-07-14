@@ -1130,3 +1130,627 @@ class TestDiffIntegration:
         )
         result = diff_specs(old, new)
         assert not result.has_breaking
+
+
+# ── Operation-level (per-endpoint) security diff tests ──
+
+
+def _op(security=None, extra=None):
+    """Build a minimal operation object, optionally with a `security` key."""
+    op = {"responses": {"200": {"description": "OK"}}}
+    if security is not None:
+        op["security"] = security
+    if extra:
+        op.update(extra)
+    return op
+
+
+class TestOperationSecurityDiff:
+    def test_operation_security_added_when_previously_inherited(self):
+        old = _make_spec(paths={"/things": {"get": _op()}})
+        new = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_added"]
+        assert matches, "expected operation_security_added"
+        assert matches[0].severity == Severity.DANGEROUS
+        assert matches[0].path == "paths./things.get.security"
+
+    def test_operation_security_removed_when_key_dropped(self):
+        old = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        new = _make_spec(paths={"/things": {"get": _op()}})
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_removed"]
+        assert matches, "expected operation_security_removed"
+        assert matches[0].severity == Severity.DANGEROUS
+
+    def test_operation_became_public_is_flagged(self):
+        old = _make_spec(
+            paths={"/admin": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        new = _make_spec(paths={"/admin": {"get": _op(security=[])}})
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_removed"]
+        assert matches, "endpoint dropping all auth must be flagged"
+        assert "no longer requires authentication" in matches[0].description
+
+    def test_public_operation_now_requires_auth(self):
+        old = _make_spec(paths={"/admin": {"get": _op(security=[])}})
+        new = _make_spec(
+            paths={"/admin": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_added"]
+        assert matches, "expected operation_security_added"
+        assert "previously public" in matches[0].description
+
+    def test_operation_security_scheme_changed(self):
+        old = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        new = _make_spec(
+            paths={"/things": {"get": _op(security=[{"apiKeyAuth": []}])}}
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "operation_security_changed"]
+        assert matches, "expected operation_security_changed"
+        assert matches[0].severity == Severity.DANGEROUS
+
+    def test_identical_operation_security_is_no_change(self):
+        old = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        new = _make_spec(
+            paths={"/things": {"get": _op(security=[{"bearerAuth": []}])}}
+        )
+        result = diff_specs(old, new)
+        assert not any(
+            c.kind.startswith("operation_security_") for c in result.changes
+        )
+
+    def test_requirement_order_and_scope_order_ignored(self):
+        # Same scheme groups, different requirement ordering -> no spurious diff.
+        old = _make_spec(
+            paths={
+                "/things": {
+                    "get": _op(security=[{"a": []}, {"b": ["read", "write"]}])
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/things": {
+                    "get": _op(security=[{"b": ["write", "read"]}, {"a": []}])
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        assert not any(
+            c.kind.startswith("operation_security_") for c in result.changes
+        )
+
+    def test_both_inherit_global_no_operation_security_change(self):
+        old = _make_spec(paths={"/things": {"get": _op()}})
+        new = _make_spec(paths={"/things": {"get": _op(extra={"summary": "x"})}})
+        result = diff_specs(old, new)
+        assert not any(
+            c.kind.startswith("operation_security_") for c in result.changes
+        )
+
+
+# ── Media-type (request/response) inline schema diff tests ──
+
+
+def _op_body(request_schema=None, response_schema=None, ct="application/json"):
+    """Build an operation with inline request/response schemas for a content type."""
+    op = {"responses": {"200": {"description": "OK"}}}
+    if request_schema is not None:
+        op["requestBody"] = {"content": {ct: {"schema": request_schema}}}
+    if response_schema is not None:
+        op["responses"]["200"] = {
+            "description": "OK",
+            "content": {ct: {"schema": response_schema}},
+        }
+    return op
+
+
+class TestMediaTypeSchemaDiff:
+    def test_response_schema_property_removed_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "name": {"type": "string"},
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "response_property_removed"]
+        assert matches, "dropping a response field must be flagged"
+        assert matches[0].severity == Severity.BREAKING
+        assert "name" in matches[0].path
+
+    def test_request_schema_new_required_property_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                            "required": ["id"],
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "email": {"type": "string"},
+                            },
+                            "required": ["id", "email"],
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        added = [c for c in result.changes if c.kind == "request_property_added"]
+        assert added, "adding a request property must be reported"
+        assert added[0].severity == Severity.BREAKING
+        assert "(required)" in added[0].description
+
+    def test_request_property_became_required_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                            "required": ["id"],
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [
+            c for c in result.changes if c.kind == "request_property_became_required"
+        ]
+        assert matches
+        assert matches[0].severity == Severity.BREAKING
+
+    def test_response_property_became_required_is_non_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                            "required": ["id"],
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [
+            c for c in result.changes if c.kind == "response_property_became_required"
+        ]
+        assert matches
+        assert matches[0].severity == Severity.NON_BREAKING
+
+    def test_response_property_no_longer_required_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                            "required": ["id"],
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [
+            c
+            for c in result.changes
+            if c.kind == "response_property_no_longer_required"
+        ]
+        assert matches
+        assert matches[0].severity == Severity.BREAKING
+
+    def test_request_property_removed_is_non_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "note": {"type": "string"},
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "request_property_removed"]
+        assert matches
+        assert matches[0].severity == Severity.NON_BREAKING
+
+    def test_property_type_change_in_response_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "integer"}},
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {"id": {"type": "string"}},
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "property_type_changed"]
+        assert matches
+        assert matches[0].severity == Severity.BREAKING
+        assert matches[0].old_value == "integer"
+        assert matches[0].new_value == "string"
+
+    def test_top_level_schema_type_change_is_breaking(self):
+        old = _make_spec(
+            paths={"/u": {"get": _op_body(response_schema={"type": "object"})}}
+        )
+        new = _make_spec(
+            paths={"/u": {"get": _op_body(response_schema={"type": "array"})}}
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "schema_type_changed"]
+        assert matches
+        assert matches[0].severity == Severity.BREAKING
+
+    def test_schema_ref_change_is_dangerous(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={"$ref": "#/components/schemas/UserV1"}
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={"$ref": "#/components/schemas/UserV2"}
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "schema_ref_changed"]
+        assert matches
+        assert matches[0].severity == Severity.DANGEROUS
+
+    def test_same_ref_produces_no_inline_schema_change(self):
+        schema = {"$ref": "#/components/schemas/User"}
+        old = _make_spec(paths={"/u": {"get": _op_body(response_schema=schema)}})
+        new = _make_spec(paths={"/u": {"get": _op_body(response_schema=schema)}})
+        result = diff_specs(old, new)
+        assert not any(
+            c.kind
+            in (
+                "schema_ref_changed",
+                "response_property_removed",
+                "response_property_added",
+                "property_type_changed",
+            )
+            for c in result.changes
+        )
+
+    def test_identical_inline_schemas_no_change(self):
+        schema = {
+            "type": "object",
+            "properties": {"id": {"type": "string"}},
+            "required": ["id"],
+        }
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(request_schema=schema, response_schema=schema)
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(request_schema=schema, response_schema=schema)
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        schema_kinds = {
+            "schema_type_changed",
+            "property_type_changed",
+            "request_property_added",
+            "response_property_removed",
+            "request_property_became_required",
+            "response_property_no_longer_required",
+        }
+        assert not any(c.kind in schema_kinds for c in result.changes)
+
+    def test_nested_object_response_property_removed_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "address": {
+                                    "type": "object",
+                                    "properties": {
+                                        "street": {"type": "string"},
+                                        "city": {"type": "string"},
+                                    },
+                                },
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "address": {
+                                    "type": "object",
+                                    "properties": {"street": {"type": "string"}},
+                                },
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "response_property_removed"]
+        assert matches, "dropping a nested response field must be flagged"
+        assert matches[0].severity == Severity.BREAKING
+        assert "address.properties.city" in matches[0].path
+
+    def test_nested_object_request_new_required_field_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {
+                                "profile": {
+                                    "type": "object",
+                                    "properties": {"name": {"type": "string"}},
+                                }
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "post": _op_body(
+                        request_schema={
+                            "type": "object",
+                            "properties": {
+                                "profile": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "bio": {"type": "string"},
+                                    },
+                                    "required": ["name", "bio"],
+                                }
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "request_property_added"]
+        assert matches, "adding a required nested request field must be flagged"
+        assert matches[0].severity == Severity.BREAKING
+        assert "profile.properties.bio" in matches[0].path
+        assert "(required)" in matches[0].description
+
+    def test_nested_array_item_property_removed_is_breaking(self):
+        old = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "sku": {"type": "string"},
+                                            "qty": {"type": "integer"},
+                                        },
+                                    },
+                                }
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        new = _make_spec(
+            paths={
+                "/u": {
+                    "get": _op_body(
+                        response_schema={
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {"qty": {"type": "integer"}},
+                                    },
+                                }
+                            },
+                        }
+                    )
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        matches = [c for c in result.changes if c.kind == "response_property_removed"]
+        assert matches, "dropping a field inside an array-of-objects must be flagged"
+        assert matches[0].severity == Severity.BREAKING
+        assert "items.items.properties.sku" in matches[0].path
+
+    def test_identical_nested_schemas_no_change(self):
+        schema = {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "address": {
+                    "type": "object",
+                    "properties": {"city": {"type": "string"}},
+                    "required": ["city"],
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {"sku": {"type": "string"}},
+                    },
+                },
+            },
+        }
+        old = _make_spec(
+            paths={"/u": {"post": _op_body(request_schema=schema, response_schema=schema)}}
+        )
+        new = _make_spec(
+            paths={"/u": {"post": _op_body(request_schema=schema, response_schema=schema)}}
+        )
+        result = diff_specs(old, new)
+        nested_kinds = {
+            "schema_type_changed",
+            "property_type_changed",
+            "request_property_added",
+            "response_property_removed",
+            "request_property_became_required",
+            "response_property_no_longer_required",
+        }
+        assert not any(c.kind in nested_kinds for c in result.changes)

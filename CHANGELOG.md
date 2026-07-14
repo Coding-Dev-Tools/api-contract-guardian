@@ -6,6 +6,8 @@ All notable changes to API Contract Guardian will be documented in this file.
 
 ### Added
 
+- Operation-level (per-endpoint) `security` diffing: detects when an endpoint drops its auth requirement (becomes public), newly requires authentication, or switches security schemes — surfaced as DANGEROUS changes (previously only global `security` was compared)
+- Recursive nested schema diffing: breaking changes inside nested object properties and array-of-object `items` schemas are now detected (e.g. a required field added deep in a request body, or a field dropped from a nested response object) — previously only top-level properties were compared, so a change buried one level down was reported as "no change"
 - MCP server integration via `mcp` subcommand (#6)
 - GitHub Pages deployment workflow (`pages.yml`)
 - npm-publish workflow for npm publishing
