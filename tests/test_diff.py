@@ -663,6 +663,159 @@ class TestSchemaDiff:
         result = diff_specs(old, new)
         assert any(c.kind == "property_no_longer_required" for c in result.changes)
 
+    def test_nested_object_property_required_change_is_breaking(self):
+        # A required field added DEEP inside a nested object property was
+        # previously reported as "no change" (silent-green gap at the
+        # component level). It must now surface as a breaking change.
+        old = _make_spec(
+            schemas={
+                "User": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "address": {
+                            "type": "object",
+                            "properties": {
+                                "street": {"type": "string"},
+                                "zip": {"type": "string"},
+                            },
+                        },
+                    },
+                }
+            }
+        )
+        new = _make_spec(
+            schemas={
+                "User": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "address": {
+                            "type": "object",
+                            "required": ["zip"],
+                            "properties": {
+                                "street": {"type": "string"},
+                                "zip": {"type": "string"},
+                            },
+                        },
+                    },
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        became_required = [
+            c for c in result.changes if c.kind == "request_property_became_required"
+        ]
+        assert became_required, "nested required change must be detected"
+        assert any(
+            "address" in c.path and "zip" in c.path for c in became_required
+        ), "change must be reported at the nested path"
+        assert all(c.severity.value == "breaking" for c in became_required), (
+            "nested required change is breaking"
+        )
+
+    def test_nested_array_item_property_required_change_is_breaking(self):
+        old = _make_spec(
+            schemas={
+                "Cart": {
+                    "type": "object",
+                    "properties": {
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {"sku": {"type": "string"}},
+                            },
+                        },
+                    },
+                }
+            }
+        )
+        new = _make_spec(
+            schemas={
+                "Cart": {
+                    "type": "object",
+                    "properties": {
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": ["sku"],
+                                "properties": {"sku": {"type": "string"}},
+                            },
+                        },
+                    },
+                }
+            }
+        )
+        result = diff_specs(old, new)
+        became_required = [
+            c for c in result.changes if c.kind == "request_property_became_required"
+        ]
+        assert became_required, "nested array-item required change must be detected"
+        assert any("items" in c.path and "sku" in c.path for c in became_required)
+
+    def test_component_ref_property_target_change_is_dangerous(self):
+        # A component property whose $ref target was retargeted must be
+        # flagged as DANGEROUS (it was previously silently ignored at the
+        # component level).
+        old = _make_spec(
+            schemas={
+                "Order": {
+                    "type": "object",
+                    "properties": {
+                        "customer": {"$ref": "#/components/schemas/CustomerV1"},
+                    },
+                },
+                "CustomerV1": {"type": "object"},
+                "CustomerV2": {"type": "object"},
+            }
+        )
+        new = _make_spec(
+            schemas={
+                "Order": {
+                    "type": "object",
+                    "properties": {
+                        "customer": {"$ref": "#/components/schemas/CustomerV2"},
+                    },
+                },
+                "CustomerV1": {"type": "object"},
+                "CustomerV2": {"type": "object"},
+            }
+        )
+        result = diff_specs(old, new)
+        ref_changed = [c for c in result.changes if c.kind == "schema_ref_changed"]
+        assert ref_changed, "ref-target change must be detected"
+        assert any(c.severity.value == "dangerous" for c in ref_changed)
+        assert any("Order" in c.path and "customer" in c.path for c in ref_changed)
+
+    def test_component_ref_property_removed_is_dangerous(self):
+        old = _make_spec(
+            schemas={
+                "Order": {
+                    "type": "object",
+                    "properties": {
+                        "customer": {"$ref": "#/components/schemas/Customer"},
+                    },
+                },
+                "Customer": {"type": "object"},
+            }
+        )
+        new = _make_spec(
+            schemas={
+                "Order": {
+                    "type": "object",
+                    "properties": {
+                        "customer": {"type": "object"},
+                    },
+                },
+                "Customer": {"type": "object"},
+            }
+        )
+        result = diff_specs(old, new)
+        ref_changed = [c for c in result.changes if c.kind == "schema_ref_changed"]
+        assert ref_changed, "dropped $ref must be detected"
+
     def test_property_removed_breaking_if_required(self):
         old = _make_spec(
             schemas={

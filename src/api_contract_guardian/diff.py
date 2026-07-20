@@ -985,6 +985,110 @@ def _diff_schema_details(
                     )
                 )
 
+    # Deep structural diff of NESTED object / array-of-object properties.
+    # Previously _diff_schema_details only compared a component's DIRECT
+    # properties (type/format/enum); a nested object property whose sub-fields
+    # changed (e.g. a required field added deep inside) was reported as "no
+    # change" -- the silent-green failure class this tool exists to catch.
+    # Reuse the proven recursive inline-schema walker (conservative: treats all
+    # required/presence changes as BREAKING, since a component may back a request
+    # body). Only the nested sub-schemas are walked here, so this never
+    # double-reports the component's own top-level properties already checked above.
+    for prop_name in old_props:
+        if prop_name not in new_props:
+            continue
+        old_sub = old_props[prop_name] or {}
+        new_sub = new_props[prop_name] or {}
+        if not isinstance(old_sub, dict) or not isinstance(new_sub, dict):
+            continue
+        is_nested_object = (
+            (old_sub.get("type") == "object" and new_sub.get("type") == "object")
+            or ("properties" in old_sub and "properties" in new_sub)
+        )
+        if is_nested_object:
+            _diff_inline_schema(
+                f"{schema_path}.properties.{prop_name}",
+                old_sub,
+                new_sub,
+                result,
+                is_request=True,
+                depth=1,
+            )
+            continue
+        if old_sub.get("type") == "array" and new_sub.get("type") == "array":
+            old_items = old_sub.get("items") or {}
+            new_items = new_sub.get("items") or {}
+            if isinstance(old_items, dict) and isinstance(new_items, dict) and (
+                (old_items.get("type") == "object" and new_items.get("type") == "object")
+                or ("properties" in old_items and "properties" in new_items)
+            ):
+                _diff_inline_schema(
+                    f"{schema_path}.properties.{prop_name}.items",
+                    old_items,
+                    new_items,
+                    result,
+                    is_request=True,
+                    depth=1,
+                )
+
+    # A property that is a $ref (or array of $ref) into another component was
+    # previously ignored entirely: retargeting or dropping the ref produced no
+    # change record. Flag ref-target changes at the property's OWN path. The
+    # referenced target's internals are already diffed by _diff_schemas at
+    # components.schemas.<Target>, so this never double-reports them -- it only
+    # surfaces that THIS property's reference changed.
+    for prop_name in set(old_props) | set(new_props):
+        _flag_schema_ref_prop(
+            schema_path, prop_name, old_props.get(prop_name), new_props.get(prop_name), result
+        )
+
+
+def _flag_schema_ref_prop(
+    schema_path: str,
+    prop_name: str,
+    old_prop: Any,
+    new_prop: Any,
+    result: DiffResult,
+) -> None:
+    """Flag a component property whose ``$ref`` target changed or was dropped.
+
+    Refs into ``components.schemas`` are intentionally NOT followed into the
+    target's internals (``_diff_schemas`` already diffs the target at its own
+    path); we only report that the reference here changed, which is independent
+    information not otherwise surfaced.
+    """
+
+    def ref_of(sub: Any) -> Any:
+        if isinstance(sub, dict):
+            return sub.get("$ref")
+        return None
+
+    old_ref = ref_of(old_prop)
+    new_ref = ref_of(new_prop)
+    # Array whose items are a $ref.
+    if old_ref is None and isinstance(old_prop, dict) and old_prop.get("type") == "array":
+        old_ref = ref_of(old_prop.get("items"))
+    if new_ref is None and isinstance(new_prop, dict) and new_prop.get("type") == "array":
+        new_ref = ref_of(new_prop.get("items"))
+
+    if old_ref is None and new_ref is None:
+        return
+
+    prop_path = f"{schema_path}.properties.{prop_name}"
+    if old_ref != new_ref:
+        result.changes.append(
+            Change(
+                kind="schema_ref_changed",
+                severity=Severity.DANGEROUS,
+                path=prop_path,
+                description=(
+                    f"$ref property '{prop_name}' target changed from '{old_ref}' to '{new_ref}'"
+                ),
+                old_value=old_ref,
+                new_value=new_ref,
+            )
+        )
+
 
 def _diff_security_schemes(
     old: dict[str, Any],
