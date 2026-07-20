@@ -12,7 +12,7 @@ Monitor OpenAPI schema diffs between git branches, detect breaking changes, gene
 |[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Coding-Dev-Tools/api-contract-guardian/blob/main/LICENSE)
 |[![Open Source Alternative](https://img.shields.io/badge/Open_Source_Alternative-%E2%87%92-blue?logo=opensourceinitiative)](https://www.opensourcealternative.to/project/api-contract-guardian)
 |[![LibHunt](https://img.shields.io/badge/LibHunt-%E2%87%92-blue?logo=codeigniter)](https://www.libhunt.com/r/Coding-Dev-Tools/api-contract-guardian)
-|[![PyPI](https://img.shields.io/pypi/v/api-contract-guardian)](https://pypi.org/project/api-contract-guardian/)
+|<!-- Not on public PyPI yet — install via git+; see Installation section -->
 
 **Why API Contract Guardian?**
 
@@ -24,11 +24,9 @@ Real-world scenarios:
 
 ## Installation
 
-```bash
-pip install api-contract-guardian
-```
+> **Note:** `api-contract-guardian` is not yet on public PyPI. Use one of the methods below.
 
-Or install the latest version directly from GitHub:
+Install the latest version directly from GitHub:
 
 ```bash
 pip install git+https://github.com/Coding-Dev-Tools/api-contract-guardian.git
