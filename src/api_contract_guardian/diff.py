@@ -963,7 +963,9 @@ def _diff_schema_details(
                         kind="property_format_changed",
                         severity=Severity.DANGEROUS,
                         path=f"{schema_path}.properties.{prop_name}",
-                        description=f"Property '{prop_name}' in '{name}' format changed from '{old_fmt}' to '{new_fmt}'",
+                        description=(
+                            f"Property '{prop_name}' in '{name}' format changed from '{old_fmt}' to '{new_fmt}'"
+                        ),
                         old_value=old_fmt,
                         new_value=new_fmt,
                     )
