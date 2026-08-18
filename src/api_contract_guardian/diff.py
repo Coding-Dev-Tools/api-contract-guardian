@@ -156,7 +156,6 @@ def _diff_paths(old: dict[str, Any], new: dict[str, Any], result: DiffResult) ->
         _diff_operations(path, old_paths[path], new_paths[path], result)
 
 
-
 def _param_key(param: dict[str, Any]) -> tuple[str, str]:
     """Identity key for a parameter: (in, name), or ('$ref', target) for refs.
 
@@ -184,6 +183,7 @@ def _effective_parameters(
             if isinstance(param, dict):
                 merged[_param_key(param)] = param
     return list(merged.values())
+
 
 def _diff_operations(
     path: str,
@@ -222,7 +222,11 @@ def _diff_operations(
             )
         elif old_op and new_op:
             _diff_operation_details(
-                path, method, old_op, new_op, result,
+                path,
+                method,
+                old_op,
+                new_op,
+                result,
                 old_params=_effective_parameters(old_item, old_op),
                 new_params=_effective_parameters(new_item, new_op),
             )
@@ -253,14 +257,10 @@ def _diff_operation_details(
     _diff_parameters(op_path, old_params, new_params, result)
 
     # Check request body
-    _diff_request_body(
-        op_path, old_op.get("requestBody"), new_op.get("requestBody"), result
-    )
+    _diff_request_body(op_path, old_op.get("requestBody"), new_op.get("requestBody"), result)
 
     # Check responses
-    _diff_responses(
-        op_path, old_op.get("responses", {}), new_op.get("responses", {}), result
-    )
+    _diff_responses(op_path, old_op.get("responses", {}), new_op.get("responses", {}), result)
 
     # Check operation-level (per-endpoint) security requirements
     _diff_operation_security(op_path, path, method, old_op, new_op, result)
@@ -338,9 +338,7 @@ def _diff_parameters(
             result.changes.append(
                 Change(
                     kind="parameter_removed",
-                    severity=Severity.BREAKING
-                    if param.get("required", False)
-                    else Severity.NON_BREAKING,
+                    severity=Severity.BREAKING if param.get("required", False) else Severity.NON_BREAKING,
                     path=f"{op_path}.parameters.{key[0]}.{key[1]}",
                     description=f"Parameter '{key[1]}' ({key[0]}) was removed",
                     old_value=param,
@@ -351,19 +349,14 @@ def _diff_parameters(
     # Added parameters
     for key, param in new_by_key.items():
         if key not in old_by_key:
-            sev = (
-                Severity.BREAKING
-                if param.get("required", False)
-                else Severity.NON_BREAKING
-            )
+            sev = Severity.BREAKING if param.get("required", False) else Severity.NON_BREAKING
             result.changes.append(
                 Change(
                     kind="parameter_added",
                     severity=sev,
                     path=f"{op_path}.parameters.{key[0]}.{key[1]}",
                     description=(
-                        f"Parameter '{key[1]}' ({key[0]}) was added"
-                        + (" (required)" if param.get("required") else "")
+                        f"Parameter '{key[1]}' ({key[0]}) was added" + (" (required)" if param.get("required") else "")
                     ),
                     old_value=None,
                     new_value=param,
@@ -597,9 +590,7 @@ def _diff_media_type_schema(
                     kind="schema_ref_changed",
                     severity=Severity.DANGEROUS,
                     path=f"{path}.schema",
-                    description=(
-                        f"Schema reference changed from '{old_ref}' to '{new_ref}'"
-                    ),
+                    description=(f"Schema reference changed from '{old_ref}' to '{new_ref}'"),
                     old_value=old_ref,
                     new_value=new_ref,
                 )
@@ -656,9 +647,7 @@ def _diff_inline_schema(
     for prop in sorted(newly_required):
         result.changes.append(
             Change(
-                kind="request_property_became_required"
-                if is_request
-                else "response_property_became_required",
+                kind="request_property_became_required" if is_request else "response_property_became_required",
                 severity=Severity.BREAKING if is_request else Severity.NON_BREAKING,
                 path=f"{path}.{prop}",
                 description=(
@@ -689,9 +678,7 @@ def _diff_inline_schema(
         # Removing a field breaks response consumers; for requests it is tolerable.
         result.changes.append(
             Change(
-                kind="response_property_removed"
-                if not is_request
-                else "request_property_removed",
+                kind="response_property_removed" if not is_request else "request_property_removed",
                 severity=Severity.BREAKING if not is_request else Severity.NON_BREAKING,
                 path=f"{path}.properties.{prop_name}",
                 description=f"Property '{prop_name}' removed from {ctx} schema",
@@ -705,14 +692,11 @@ def _diff_inline_schema(
         added_required = prop_name in new_required and is_request
         result.changes.append(
             Change(
-                kind="request_property_added"
-                if is_request
-                else "response_property_added",
+                kind="request_property_added" if is_request else "response_property_added",
                 severity=Severity.BREAKING if added_required else Severity.NON_BREAKING,
                 path=f"{path}.properties.{prop_name}",
                 description=(
-                    f"Property '{prop_name}' added to {ctx} schema"
-                    + (" (required)" if added_required else "")
+                    f"Property '{prop_name}' added to {ctx} schema" + (" (required)" if added_required else "")
                 ),
             )
         )
@@ -733,10 +717,7 @@ def _diff_inline_schema(
                     kind="property_type_changed",
                     severity=Severity.BREAKING,
                     path=f"{path}.properties.{prop_name}",
-                    description=(
-                        f"Property '{prop_name}' in {ctx} schema type changed"
-                        f" from '{old_pt}' to '{new_pt}'"
-                    ),
+                    description=(f"Property '{prop_name}' in {ctx} schema type changed from '{old_pt}' to '{new_pt}'"),
                     old_value=old_pt,
                     new_value=new_pt,
                 )
@@ -757,9 +738,9 @@ def _diff_inline_schema(
             if not isinstance(old_prop, dict) or not isinstance(new_prop, dict):
                 continue
             # Nested object -> recurse into its own properties/required set.
-            both_object = (
-                old_prop.get("type") == "object" and new_prop.get("type") == "object"
-            ) or ("properties" in old_prop and "properties" in new_prop)
+            both_object = (old_prop.get("type") == "object" and new_prop.get("type") == "object") or (
+                "properties" in old_prop and "properties" in new_prop
+            )
             if both_object:
                 _diff_inline_schema(
                     f"{path}.properties.{prop_name}",
@@ -771,23 +752,15 @@ def _diff_inline_schema(
                 )
                 continue
             # Array whose items are an object -> recurse into the item schema.
-            if (
-                old_prop.get("type") == "array"
-                and new_prop.get("type") == "array"
-            ):
+            if old_prop.get("type") == "array" and new_prop.get("type") == "array":
                 old_items = old_prop.get("items") or {}
                 new_items = new_prop.get("items") or {}
                 if (
                     isinstance(old_items, dict)
                     and isinstance(new_items, dict)
                     and (
-                        (
-                            old_items.get("type") == "object"
-                            and new_items.get("type") == "object"
-                        )
-                        or (
-                            "properties" in old_items and "properties" in new_items
-                        )
+                        (old_items.get("type") == "object" and new_items.get("type") == "object")
+                        or ("properties" in old_items and "properties" in new_items)
                     )
                 ):
                     _diff_inline_schema(
@@ -908,9 +881,7 @@ def _diff_schema_details(
             result.changes.append(
                 Change(
                     kind="property_removed",
-                    severity=Severity.BREAKING
-                    if prop_name in old_required
-                    else Severity.DANGEROUS,
+                    severity=Severity.BREAKING if prop_name in old_required else Severity.DANGEROUS,
                     path=f"{schema_path}.properties.{prop_name}",
                     description=f"Property '{prop_name}' removed from schema '{name}'",
                 )
@@ -934,11 +905,7 @@ def _diff_schema_details(
         new_prop = new_props[prop_name]
 
         # Property type change
-        if (
-            old_prop.get("type")
-            and new_prop.get("type")
-            and old_prop["type"] != new_prop["type"]
-        ):
+        if old_prop.get("type") and new_prop.get("type") and old_prop["type"] != new_prop["type"]:
             result.changes.append(
                 Change(
                     kind="property_type_changed",
@@ -1003,9 +970,8 @@ def _diff_schema_details(
         new_sub = new_props[prop_name] or {}
         if not isinstance(old_sub, dict) or not isinstance(new_sub, dict):
             continue
-        is_nested_object = (
-            (old_sub.get("type") == "object" and new_sub.get("type") == "object")
-            or ("properties" in old_sub and "properties" in new_sub)
+        is_nested_object = (old_sub.get("type") == "object" and new_sub.get("type") == "object") or (
+            "properties" in old_sub and "properties" in new_sub
         )
         if is_nested_object:
             _diff_inline_schema(
@@ -1020,9 +986,13 @@ def _diff_schema_details(
         if old_sub.get("type") == "array" and new_sub.get("type") == "array":
             old_items = old_sub.get("items") or {}
             new_items = new_sub.get("items") or {}
-            if isinstance(old_items, dict) and isinstance(new_items, dict) and (
-                (old_items.get("type") == "object" and new_items.get("type") == "object")
-                or ("properties" in old_items and "properties" in new_items)
+            if (
+                isinstance(old_items, dict)
+                and isinstance(new_items, dict)
+                and (
+                    (old_items.get("type") == "object" and new_items.get("type") == "object")
+                    or ("properties" in old_items and "properties" in new_items)
+                )
             ):
                 _diff_inline_schema(
                     f"{schema_path}.properties.{prop_name}.items",
@@ -1040,9 +1010,7 @@ def _diff_schema_details(
     # components.schemas.<Target>, so this never double-reports them -- it only
     # surfaces that THIS property's reference changed.
     for prop_name in set(old_props) | set(new_props):
-        _flag_schema_ref_prop(
-            schema_path, prop_name, old_props.get(prop_name), new_props.get(prop_name), result
-        )
+        _flag_schema_ref_prop(schema_path, prop_name, old_props.get(prop_name), new_props.get(prop_name), result)
 
 
 def _flag_schema_ref_prop(
@@ -1083,9 +1051,7 @@ def _flag_schema_ref_prop(
                 kind="schema_ref_changed",
                 severity=Severity.DANGEROUS,
                 path=prop_path,
-                description=(
-                    f"$ref property '{prop_name}' target changed from '{old_ref}' to '{new_ref}'"
-                ),
+                description=(f"$ref property '{prop_name}' target changed from '{old_ref}' to '{new_ref}'"),
                 old_value=old_ref,
                 new_value=new_ref,
             )
@@ -1160,8 +1126,7 @@ def _security_requirement_groups(security: list[Any]) -> set[frozenset[str]]:
 def _format_security_groups(groups: set[frozenset[str]]) -> str:
     """Render security scheme groups as a human-readable 'A OR B+C' string."""
     rendered = [
-        "+".join(sorted(group)) if group else "(anonymous)"
-        for group in sorted(groups, key=lambda g: sorted(g))
+        "+".join(sorted(group)) if group else "(anonymous)" for group in sorted(groups, key=lambda g: sorted(g))
     ]
     return " OR ".join(rendered) if rendered else "(none)"
 
@@ -1224,8 +1189,7 @@ def _diff_operation_security(
                 severity=Severity.DANGEROUS,
                 path=sec_path,
                 description=(
-                    f"{label} dropped its operation-level security; it now "
-                    "inherits the global security requirement"
+                    f"{label} dropped its operation-level security; it now inherits the global security requirement"
                 ),
                 old_value=[sorted(g) for g in old_groups],
                 new_value=None,
@@ -1243,10 +1207,7 @@ def _diff_operation_security(
                 kind="operation_security_removed",
                 severity=Severity.DANGEROUS,
                 path=sec_path,
-                description=(
-                    f"{label} no longer requires authentication (security: []); "
-                    "it was previously protected"
-                ),
+                description=(f"{label} no longer requires authentication (security: []); it was previously protected"),
                 old_value=[sorted(g) for g in old_groups],
                 new_value=[],
             )
