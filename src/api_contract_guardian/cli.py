@@ -73,6 +73,18 @@ def _stderr_console() -> Any:
     return Console(stderr=True)
 
 
+def _echo_raw(text: str) -> None:
+    """Emit machine-readable payload (json/yaml) unwrapped to stdout.
+
+    Rich's ``Console.print`` soft-wraps long lines at the detected console
+    width (default 80 columns even when piped), which corrupts JSON/YAML
+    consumed by CI pipes. Machine formats must go out byte-exact.
+    """
+    import click
+
+    click.echo(text)
+
+
 def _write_output(output: str, content: str) -> None:
     """Write CLI --output content, creating missing parent directories
     instead of crashing with an unhandled FileNotFoundError traceback."""
@@ -212,7 +224,7 @@ def diff(
             _write_output(output, output_data)
             console.print(f"Written to {output}")
         else:
-            console.print(output_data)
+            _echo_raw(output_data)
     elif format == "yaml":
         output_data = yaml.safe_dump(
             result.to_dict(), sort_keys=False, default_flow_style=False
@@ -221,14 +233,14 @@ def diff(
             _write_output(output, output_data)
             console.print(f"Written to {output}")
         else:
-            console.print(output_data)
+            _echo_raw(output_data)
     elif format == "markdown":
         guide = generate_migration_guide(result)
         if output:
             _write_output(output, guide)
             console.print(f"Written to {output}")
         else:
-            console.print(guide)
+            _echo_raw(guide)
     else:
         _print_result(result)
         if output:
@@ -286,14 +298,19 @@ def check(
     console = _get_console()
 
     if gate_result.passed:
-        console.print(f"[green bold]{gate_result.message}[/green bold]")
+        message = f"[green bold]{gate_result.message}[/green bold]"
     else:
-        console.print(f"[red bold]{gate_result.message}[/red bold]")
+        message = f"[red bold]{gate_result.message}[/red bold]"
 
     if format == "rich":
+        # Human output: status plus summary table on stdout.
+        console.print(message)
         # Still show the summary for human-friendly output.
         _print_result(result)
     else:
+        # Machine-readable run: the human status line goes to stderr so
+        # stdout stays a parseable json/yaml document for CI pipes.
+        _stderr_console().print(message)
         payload = {
             "gate": gate_result.to_dict(),
             "diff": result.to_dict(),
@@ -304,7 +321,7 @@ def check(
             )
         else:
             output_data = json.dumps(payload, indent=2)
-        console.print(output_data)
+        _echo_raw(output_data)
 
     if output:
         payload = {
@@ -361,7 +378,7 @@ def migrate(
         _write_output(output, content)
         console.print(f"Migration guide written to {output}")
     else:
-        console.print(content)
+        _echo_raw(content)
 
 
 @app.command()

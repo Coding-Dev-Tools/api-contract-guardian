@@ -147,3 +147,48 @@ class TestErrorObservability:
         assert result.returncode == 0
         assert out.exists()
         assert "Written to" in result.stdout
+
+
+class TestMachineReadableOutput:
+    """--format json/yaml stdout must parse even with very long lines.
+
+    Rich's Console soft-wraps long lines at the console width (80 columns
+    when piped), which corrupts JSON/YAML piped into CI. Machine formats are
+    emitted raw via click.echo and must never be wrapped.
+    """
+
+    @pytest.mark.skipif(
+        not SPEC_V1.exists() or not SPEC_V2.exists(),
+        reason="fixture specs missing",
+    )
+    def test_piped_json_stdout_parses(self) -> None:
+        import json
+
+        result = _run("diff", str(SPEC_V1), str(SPEC_V2), "--format", "json")
+        assert result.returncode == 0
+        payload = json.loads(result.stdout)  # raises if rich wrapped any line
+        assert "changes" in payload
+
+    @pytest.mark.skipif(
+        not SPEC_V1.exists() or not SPEC_V2.exists(),
+        reason="fixture specs missing",
+    )
+    def test_piped_yaml_stdout_parses(self) -> None:
+        import yaml
+
+        result = _run("diff", str(SPEC_V1), str(SPEC_V2), "--format", "yaml")
+        assert result.returncode == 0
+        payload = yaml.safe_load(result.stdout)
+        assert isinstance(payload, dict) and "changes" in payload
+
+    @pytest.mark.skipif(
+        not SPEC_V1.exists() or not SPEC_V2.exists(),
+        reason="fixture specs missing",
+    )
+    def test_check_json_stdout_parses(self) -> None:
+        import json
+
+        result = _run("check", str(SPEC_V1), str(SPEC_V2), "--format", "json")
+        assert result.returncode in (0, 1)
+        payload = json.loads(result.stdout)
+        assert "gate" in payload and "diff" in payload
