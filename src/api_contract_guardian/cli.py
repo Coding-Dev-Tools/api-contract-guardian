@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -80,9 +81,8 @@ def _echo_raw(text: str) -> None:
     width (default 80 columns even when piped), which corrupts JSON/YAML
     consumed by CI pipes. Machine formats must go out byte-exact.
     """
-    import click
-
-    click.echo(text)
+    sys.stdout.write(f"{text}\n")
+    sys.stdout.flush()
 
 
 def _write_output(output: str, content: str) -> None:
