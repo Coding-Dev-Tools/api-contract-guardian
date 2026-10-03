@@ -19,9 +19,7 @@ try:
 except ImportError:
     import warnings
 
-    warnings.warn(
-        "revenueholdings-license not installed; license checks skipped", stacklevel=2
-    )
+    warnings.warn("revenueholdings-license not installed; license checks skipped", stacklevel=2)
     _has_rh = False
 
     def require_license(product: str) -> None:  # type: ignore[misc]
@@ -54,15 +52,11 @@ def _require_license(tool_name: str) -> None:
             raise
 
 
-def _validate_output_format(
-    format_name: str, allowed: tuple[str, ...], command: str
-) -> str:
+def _validate_output_format(format_name: str, allowed: tuple[str, ...], command: str) -> str:
     """Reject unsupported output formats before the command runs."""
     if format_name not in allowed:
         allowed_list = ", ".join(allowed)
-        raise typer.BadParameter(
-            f"Unsupported {command} format '{format_name}'. Choose from: {allowed_list}"
-        )
+        raise typer.BadParameter(f"Unsupported {command} format '{format_name}'. Choose from: {allowed_list}")
     return format_name
 
 
@@ -126,9 +120,7 @@ def _app_callback(
 ) -> None:
     """Detect breaking changes in OpenAPI specs and gate CI pipelines."""
     global _require_license_strict
-    _require_license_strict = require_license_flag or bool(
-        os.environ.get("REVENUEHOLDINGS_REQUIRE_LICENSE")
-    )
+    _require_license_strict = require_license_flag or bool(os.environ.get("REVENUEHOLDINGS_REQUIRE_LICENSE"))
 
 
 def _load_and_validate(path: str) -> dict:
@@ -168,17 +160,11 @@ def _print_result(result: Any) -> None:
     table.add_column("Severity")
 
     for change in breaking:
-        table.add_row(
-            change.path, change.kind, change.description, "[red]Breaking[/red]"
-        )
+        table.add_row(change.path, change.kind, change.description, "[red]Breaking[/red]")
     for change in dangerous:
-        table.add_row(
-            change.path, change.kind, change.description, "[yellow]Dangerous[/yellow]"
-        )
+        table.add_row(change.path, change.kind, change.description, "[yellow]Dangerous[/yellow]")
     for change in non_breaking:
-        table.add_row(
-            change.path, change.kind, change.description, "[green]Non-breaking[/green]"
-        )
+        table.add_row(change.path, change.kind, change.description, "[green]Non-breaking[/green]")
     for change in info:
         table.add_row(change.path, change.kind, change.description, "[blue]Info[/blue]")
 
@@ -196,9 +182,7 @@ def diff(
     old: str = typer.Argument(..., help="Path to old (baseline) OpenAPI spec"),
     new: str = typer.Argument(..., help="Path to new (proposed) OpenAPI spec"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
-    format: str = typer.Option(
-        "rich", "--format", "-f", help="Output format: rich, json, yaml, markdown"
-    ),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, yaml, markdown"),
 ) -> None:
     """Compare two OpenAPI specs and show all detected changes."""
     import json
@@ -209,9 +193,7 @@ def diff(
     from .migration import generate_migration_guide
 
     _require_license("api-contract-guardian")
-    format = _validate_output_format(
-        format, ("rich", "json", "yaml", "markdown"), "diff"
-    )
+    format = _validate_output_format(format, ("rich", "json", "yaml", "markdown"), "diff")
     old_spec = _load_and_validate(old)
     new_spec = _load_and_validate(new)
 
@@ -226,9 +208,7 @@ def diff(
         else:
             _echo_raw(output_data)
     elif format == "yaml":
-        output_data = yaml.safe_dump(
-            result.to_dict(), sort_keys=False, default_flow_style=False
-        )
+        output_data = yaml.safe_dump(result.to_dict(), sort_keys=False, default_flow_style=False)
         if output:
             _write_output(output, output_data)
             console.print(f"Written to {output}")
@@ -263,16 +243,10 @@ def check(
         "--fail-on-dangerous/--allow-dangerous",
         help="Fail on dangerous changes",
     ),
-    max_breaking: int = typer.Option(
-        -1, "--max-breaking", help="Max breaking changes (-1=defer, 0=none)"
-    ),
-    max_dangerous: int = typer.Option(
-        -1, "--max-dangerous", help="Max dangerous changes (-1=defer, 0=none)"
-    ),
+    max_breaking: int = typer.Option(-1, "--max-breaking", help="Max breaking changes (-1=defer, 0=none)"),
+    max_dangerous: int = typer.Option(-1, "--max-dangerous", help="Max dangerous changes (-1=defer, 0=none)"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
-    format: str = typer.Option(
-        "rich", "--format", "-f", help="Output format: rich, json, yaml"
-    ),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich, json, yaml"),
 ) -> None:
     """Gate CI pipeline on breaking changes. Returns exit code 1 if gate fails."""
     import json
@@ -316,9 +290,7 @@ def check(
             "diff": result.to_dict(),
         }
         if format == "yaml":
-            output_data = yaml.safe_dump(
-                payload, sort_keys=False, default_flow_style=False
-            )
+            output_data = yaml.safe_dump(payload, sort_keys=False, default_flow_style=False)
         else:
             output_data = json.dumps(payload, indent=2)
         _echo_raw(output_data)
@@ -329,9 +301,7 @@ def check(
             "diff": result.to_dict(),
         }
         if format == "yaml":
-            output_data = yaml.safe_dump(
-                payload, sort_keys=False, default_flow_style=False
-            )
+            output_data = yaml.safe_dump(payload, sort_keys=False, default_flow_style=False)
         else:
             output_data = json.dumps(payload, indent=2)
         _write_output(output, output_data)
@@ -345,9 +315,7 @@ def migrate(
     old: str = typer.Argument(..., help="Path to old (baseline) OpenAPI spec"),
     new: str = typer.Argument(..., help="Path to new (proposed) OpenAPI spec"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file path"),
-    format: str = typer.Option(
-        "markdown", "--format", "-f", help="Output format: markdown, json, yaml"
-    ),
+    format: str = typer.Option("markdown", "--format", "-f", help="Output format: markdown, json, yaml"),
 ) -> None:
     """Generate a migration guide between two OpenAPI spec versions."""
     import json
