@@ -143,12 +143,16 @@ MIT
 
 ## Install
 
+api-contract-guardian is a Python CLI and is not on public PyPI:
+
 ```bash
-npm install
+pip install git+https://github.com/Coding-Dev-Tools/api-contract-guardian.git
 ```
+
+For development: `pip install -e .`
 
 ## Test
 
 ```bash
-npm test  # runs: node --test tests/
+pytest tests/
 ```
