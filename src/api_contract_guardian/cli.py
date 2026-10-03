@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -65,6 +66,34 @@ def _validate_output_format(
     return format_name
 
 
+def _stderr_console() -> Any:
+    """A Rich console bound to stderr (errors must never pollute stdout,
+    which CI pipes consume for --format json/yaml output)."""
+    from rich.console import Console
+
+    return Console(stderr=True)
+
+
+def _echo_raw(text: str) -> None:
+    """Emit machine-readable payload (json/yaml) unwrapped to stdout.
+
+    Rich's ``Console.print`` soft-wraps long lines at the detected console
+    width (default 80 columns even when piped), which corrupts JSON/YAML
+    consumed by CI pipes. Machine formats must go out byte-exact.
+    """
+    sys.stdout.write(f"{text}\n")
+    sys.stdout.flush()
+
+
+def _write_output(output: str, content: str) -> None:
+    """Write CLI --output content, creating missing parent directories
+    instead of crashing with an unhandled FileNotFoundError traceback."""
+    out_path = Path(output)
+    if out_path.parent and not out_path.parent.exists():
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(content, encoding="utf-8")
+
+
 app = typer.Typer(
     name="api-contract-guardian",
     help="Detect breaking changes in OpenAPI specs and gate CI pipelines.",
@@ -111,9 +140,7 @@ def _load_and_validate(path: str) -> dict:
         validate_openapi_version(spec)
         return spec
     except SpecLoadError as e:
-        from rich.console import Console
-
-        Console().print(f"[red]Error loading: {e}[/red]")
+        _stderr_console().print(f"[red]Error loading: {e}[/red]")
         raise typer.Exit(code=1) from e
 
 
@@ -194,31 +221,31 @@ def diff(
     if format == "json":
         output_data = json.dumps(result.to_dict(), indent=2)
         if output:
-            Path(output).write_text(output_data, encoding="utf-8")
+            _write_output(output, output_data)
             console.print(f"Written to {output}")
         else:
-            console.print(output_data)
+            _echo_raw(output_data)
     elif format == "yaml":
         output_data = yaml.safe_dump(
             result.to_dict(), sort_keys=False, default_flow_style=False
         )
         if output:
-            Path(output).write_text(output_data, encoding="utf-8")
+            _write_output(output, output_data)
             console.print(f"Written to {output}")
         else:
-            console.print(output_data)
+            _echo_raw(output_data)
     elif format == "markdown":
         guide = generate_migration_guide(result)
         if output:
-            Path(output).write_text(guide, encoding="utf-8")
+            _write_output(output, guide)
             console.print(f"Written to {output}")
         else:
-            console.print(guide)
+            _echo_raw(guide)
     else:
         _print_result(result)
         if output:
             output_data = json.dumps(result.to_dict(), indent=2)
-            Path(output).write_text(output_data, encoding="utf-8")
+            _write_output(output, output_data)
             console.print(f"\nJSON output written to {output}")
 
 
@@ -271,14 +298,19 @@ def check(
     console = _get_console()
 
     if gate_result.passed:
-        console.print(f"[green bold]{gate_result.message}[/green bold]")
+        message = f"[green bold]{gate_result.message}[/green bold]"
     else:
-        console.print(f"[red bold]{gate_result.message}[/red bold]")
+        message = f"[red bold]{gate_result.message}[/red bold]"
 
     if format == "rich":
+        # Human output: status plus summary table on stdout.
+        console.print(message)
         # Still show the summary for human-friendly output.
         _print_result(result)
     else:
+        # Machine-readable run: the human status line goes to stderr so
+        # stdout stays a parseable json/yaml document for CI pipes.
+        _stderr_console().print(message)
         payload = {
             "gate": gate_result.to_dict(),
             "diff": result.to_dict(),
@@ -289,7 +321,7 @@ def check(
             )
         else:
             output_data = json.dumps(payload, indent=2)
-        console.print(output_data)
+        _echo_raw(output_data)
 
     if output:
         payload = {
@@ -302,7 +334,7 @@ def check(
             )
         else:
             output_data = json.dumps(payload, indent=2)
-        Path(output).write_text(output_data, encoding="utf-8")
+        _write_output(output, output_data)
         console.print(f"\nWritten to {output}")
 
     raise typer.Exit(code=gate_result.exit_code)
@@ -343,10 +375,10 @@ def migrate(
         content = generate_migration_guide(result)
 
     if output:
-        Path(output).write_text(content, encoding="utf-8")
+        _write_output(output, content)
         console.print(f"Migration guide written to {output}")
     else:
-        console.print(content)
+        _echo_raw(content)
 
 
 @app.command()
