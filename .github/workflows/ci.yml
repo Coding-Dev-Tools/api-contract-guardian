@@ -41,3 +41,21 @@ jobs:
         run: |
           api-contract-guardian --help
 
+  node:
+    name: Node checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Run Node tests
+        run: npm test
+      - name: Lint JavaScript
+        run: npm run lint
