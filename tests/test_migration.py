@@ -8,9 +8,7 @@ from api_contract_guardian.migration import (
 
 
 def _make_result(changes=None, old_version="3.0.0", new_version="3.1.0"):
-    return DiffResult(
-        changes=changes or [], old_version=old_version, new_version=new_version
-    )
+    return DiffResult(changes=changes or [], old_version=old_version, new_version=new_version)
 
 
 class TestGenerateMigrationGuide:

@@ -141,9 +141,7 @@ class TestErrorObservability:
 
     def test_diff_output_creates_parent_dirs(self, tmp_path: Path) -> None:
         out = tmp_path / "nested" / "dir" / "report.json"
-        result = _run(
-            "diff", str(SPEC_V1), str(SPEC_V2), "--format", "json", "--output", str(out)
-        )
+        result = _run("diff", str(SPEC_V1), str(SPEC_V2), "--format", "json", "--output", str(out))
         assert result.returncode == 0
         assert out.exists()
         assert "Written to" in result.stdout

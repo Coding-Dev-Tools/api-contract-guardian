@@ -69,14 +69,10 @@ def check_gate(
         effective_max_dangerous = -1  # unlimited
 
     # Check breaking
-    breaking_fails = (
-        effective_max_breaking >= 0 and breaking_count > effective_max_breaking
-    )
+    breaking_fails = effective_max_breaking >= 0 and breaking_count > effective_max_breaking
 
     # Check dangerous
-    dangerous_fails = (
-        effective_max_dangerous >= 0 and dangerous_count > effective_max_dangerous
-    )
+    dangerous_fails = effective_max_dangerous >= 0 and dangerous_count > effective_max_dangerous
 
     passed = not breaking_fails and not dangerous_fails
     exit_code = 0 if passed else 1

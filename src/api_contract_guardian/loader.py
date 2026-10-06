@@ -52,14 +52,11 @@ def load_spec(path: str | Path) -> dict[str, Any]:
             try:
                 spec = json.loads(content)
             except json.JSONDecodeError as exc:
-                raise SpecLoadError(
-                    f"Cannot parse {path} as YAML or JSON: {exc}"
-                ) from exc
+                raise SpecLoadError(f"Cannot parse {path} as YAML or JSON: {exc}") from exc
 
     if not isinstance(spec, dict):
         raise SpecLoadError(
-            f"Spec in {path} is not a valid OpenAPI document"
-            f" (expected dict, got {type(spec).__name__})"
+            f"Spec in {path} is not a valid OpenAPI document (expected dict, got {type(spec).__name__})"
         )
 
     return spec
@@ -81,9 +78,7 @@ def load_spec_from_string(content: str, fmt: str = "yaml") -> dict[str, Any]:
         except json.JSONDecodeError as exc:
             raise SpecLoadError(f"Invalid JSON: {exc}") from exc
         if not isinstance(spec, dict):
-            raise SpecLoadError(
-                f"Spec is not a valid OpenAPI document (expected dict, got {type(spec).__name__})"
-            )
+            raise SpecLoadError(f"Spec is not a valid OpenAPI document (expected dict, got {type(spec).__name__})")
         return spec
     else:
         try:
@@ -92,9 +87,7 @@ def load_spec_from_string(content: str, fmt: str = "yaml") -> dict[str, Any]:
             raise SpecLoadError(f"Invalid YAML: {exc}") from exc
 
         if not isinstance(spec, dict):
-            raise SpecLoadError(
-                f"Spec is not a valid OpenAPI document (expected dict, got {type(spec).__name__})"
-            )
+            raise SpecLoadError(f"Spec is not a valid OpenAPI document (expected dict, got {type(spec).__name__})")
 
         return spec
 
@@ -113,9 +106,7 @@ def validate_openapi_version(spec: dict[str, Any]) -> str:
     """
     version = spec.get("openapi", spec.get("swagger", ""))
     if not version:
-        raise SpecLoadError(
-            "Spec does not contain 'openapi' or 'swagger' version field"
-        )
+        raise SpecLoadError("Spec does not contain 'openapi' or 'swagger' version field")
     # YAML parses an unquoted `openapi: 3.1` as a float; normalize to str so
     # .startswith below raises SpecLoadError instead of AttributeError.
     version = str(version)
@@ -124,9 +115,7 @@ def validate_openapi_version(spec: dict[str, Any]) -> str:
         return version
 
     if version.startswith("2."):
-        raise SpecLoadError(
-            f"OpenAPI {version} (Swagger) is not supported. Only OpenAPI 3.x specs are supported."
-        )
+        raise SpecLoadError(f"OpenAPI {version} (Swagger) is not supported. Only OpenAPI 3.x specs are supported.")
 
     raise SpecLoadError(f"Unrecognized OpenAPI version: {version}")
 

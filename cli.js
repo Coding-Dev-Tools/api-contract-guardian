@@ -8,9 +8,6 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-// Find the Python package directory
-const packageDir = path.join(__dirname, 'src', 'api_contract_guardian');
-
 // Run the Python CLI
 const python = spawn('python', ['-m', 'api_contract_guardian', ...process.argv.slice(2)], {
   cwd: __dirname,
