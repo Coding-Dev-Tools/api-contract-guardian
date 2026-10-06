@@ -63,9 +63,7 @@ class TestDiffEdgeCases:
 
     def test_diff_invalid_input(self):
         """diff with non-existent file shows error."""
-        result = runner.invoke(
-            app, ["diff", "/nonexistent/old.yaml", "/nonexistent/new.yaml"]
-        )
+        result = runner.invoke(app, ["diff", "/nonexistent/old.yaml", "/nonexistent/new.yaml"])
         assert result.exit_code != 0
         assert "Error" in result.output
 
@@ -75,9 +73,7 @@ class TestCheckEdgeCases:
 
     def test_check_invalid_input(self):
         """check with non-existent file shows error."""
-        result = runner.invoke(
-            app, ["check", "/nonexistent/old.yaml", "/nonexistent/new.yaml"]
-        )
+        result = runner.invoke(app, ["check", "/nonexistent/old.yaml", "/nonexistent/new.yaml"])
         assert result.exit_code != 0
         assert "Error" in result.output
 
@@ -87,8 +83,6 @@ class TestMigrateEdgeCases:
 
     def test_migrate_invalid_input(self):
         """migrate with non-existent file shows error."""
-        result = runner.invoke(
-            app, ["migrate", "/nonexistent/old.yaml", "/nonexistent/new.yaml"]
-        )
+        result = runner.invoke(app, ["migrate", "/nonexistent/old.yaml", "/nonexistent/new.yaml"])
         assert result.exit_code != 0
         assert "Error" in result.output
