@@ -18,10 +18,6 @@ updates:
     commit-message:
       prefix: "deps(pip)"
       include: "scope"
-    reviewers:
-      - "Coding-Dev-Tools/engineers"
-    assignees:
-      - "Coding-Dev-Tools/engineers"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -38,10 +34,6 @@ updates:
     commit-message:
       prefix: "deps(actions)"
       include: "scope"
-    reviewers:
-      - "Coding-Dev-Tools/engineers"
-    assignees:
-      - "Coding-Dev-Tools/engineers"
 
   # npm (for package.json if present)
   - package-ecosystem: "npm"
@@ -58,7 +50,3 @@ updates:
     commit-message:
       prefix: "deps(npm)"
       include: "scope"
-    reviewers:
-      - "Coding-Dev-Tools/engineers"
-    assignees:
-      - "Coding-Dev-Tools/engineers"
